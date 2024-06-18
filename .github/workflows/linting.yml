@@ -1,0 +1,43 @@
+name: Linting
+on: [push]
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install BUN & Eslint
+        run: npm install -g bun eslint
+
+      - name: Get bun store directory
+        id: bun-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(bun store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup bun cache
+        with:
+          path: |
+            ${{ steps.bun-cache.outputs.STORE_PATH }}
+            ~/.cache/Cypress
+          key: ${{ runner.os }}-bun-store-${{ hashFiles('**/bun-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-store-
+
+      - name: Install Dependencies and Run Eslint Checking
+        run: |
+          cd ui
+          bun install
+          bun run lint
