@@ -4,6 +4,7 @@ import { injectStyle } from 'react-toastify/dist/inject-style';
 
 import Link from 'next/link';
 
+import { AccountConnect } from '@/components/AccountConnect';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -45,6 +46,11 @@ export const Navigation: IComponent = () => {
                 Documentation
               </NavigationMenuLink>
             </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem className="min-w-48 flex justify-end">
+            <div className='w-max'>
+              <AccountConnect />
+            </div>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

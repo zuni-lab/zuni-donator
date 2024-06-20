@@ -5,6 +5,7 @@ import { Montserrat } from 'next/font/google';
 import { Suspense } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '@coinbase/onchainkit/styles.css';
 
 import ProgressBarClient from '@/components/ProgressBar';
 import { TransitionLayout } from '@/layouts/TransitionLayout';
