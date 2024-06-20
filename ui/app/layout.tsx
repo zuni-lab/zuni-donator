@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import ProgressBarClient from '@/components/NavProgressBar';
+import ProgressBarClient from '@/components/ProgressBar';
 import { TransitionLayout } from '@/layouts/TransitionLayout';
 
 import Providers from './provider';
@@ -34,7 +34,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang={params.lang}>
-      <body className={montserrat.className}>
+      <body className={`dark bg-background ${montserrat.className}`}>
         <Suspense>
           <ProgressBarClient />
           <ToastContainer position="bottom-right" newestOnTop />

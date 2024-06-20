@@ -1,17 +1,25 @@
 import { VaultCard } from '@/components/VaultCard';
 import { VaultForm } from '@/components/VaultForm';
+import { Button } from '@/components/shadcn/Button';
 import Head from 'next/head';
 
 export default function HomePage() {
   return (
     <div>
       <Head>
-        <title>Hello World!</title>
+        <title>Zuni Vault</title>
         <meta name="description" content="Your thoughts, your words, your story." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="py-12">
-        <h1 className="text-4xl font-bold text-center">Welcome to Zuni donator!</h1>
+      <main className="py-16">
+        <div className="glass rounded p-12 flex flex-col items-center justify-normal gap-8">
+          <h1 className="text-7xl font-bold text-center">Zuni Vault</h1>
+          <p className='text-xl text-center w-[500px]'>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua.
+          </p>
+          <Button className='h-12 text-lg px-6'>Get Started</Button>
+        </div>
         <div className="flex justify-end items-center pr-4">
           <VaultForm />
         </div>
