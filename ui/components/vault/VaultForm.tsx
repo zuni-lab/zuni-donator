@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from './shadcn/Button';
+import { Button } from '@/shadcn/Button';
 import {
   Dialog,
   DialogTrigger,
@@ -9,9 +9,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from './shadcn/Dialog';
-import { Input } from './shadcn/Input';
-import { Label } from './shadcn/Label';
+} from '@/shadcn/Dialog';
+import { Input } from '@/shadcn/Input';
+import { Label } from '@/shadcn/Label';
 
 export const VaultForm: IComponent = () => {
   return (

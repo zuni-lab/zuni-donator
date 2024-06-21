@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from './shadcn/Card';
+} from '@/shadcn/Card';
 
 export const VaultCard: IComponent = () => {
   const router = useRouter();

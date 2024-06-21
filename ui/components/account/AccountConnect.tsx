@@ -5,7 +5,7 @@ import { baseSepolia } from 'viem/chains';
 import { useAccount, useChainId, useConnect, useDisconnect } from 'wagmi';
 import { AccountDropdown } from './AccountDropdown';
 import { AccountInfoPanel } from './AccountInfoPanel';
-import { Button } from './shadcn/Button';
+import { Button } from '../shadcn/Button';
 
 /**
  * AccountConnect

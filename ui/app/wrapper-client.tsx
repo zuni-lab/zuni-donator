@@ -2,61 +2,9 @@
 import { Suspense, useEffect } from 'react';
 import { injectStyle } from 'react-toastify/dist/inject-style';
 
-import Link from 'next/link';
-
-import { AccountConnect } from '@/components/AccountConnect';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from '@/components/shadcn/Navigation';
+import { Navigation } from '@/components/Navigation';
 import { Authentication } from './Authentication';
-
-export const Navigation: IComponent = () => {
-  return (
-    <div className="py-8 px-20 flex justify-end items-center">
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <Link href="/docs" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                About
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/docs" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Our vaults
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/docs" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Policy
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/docs" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Documentation
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem className="pl-8 flex justify-end">
-            <div className='w-max'>
-              <AccountConnect />
-            </div>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
-    </div>
-  );
-};
+import { Footer } from '@/components/Footer';
 
 export const WrapperClientLayout: IComponent = ({ children }) => {
   useEffect(() => {
@@ -67,6 +15,7 @@ export const WrapperClientLayout: IComponent = ({ children }) => {
     <div className="w-full h-auto relative text-white">
       <Navigation />
       {children}
+      <Footer />
       <Suspense>
         <Authentication />
       </Suspense>
