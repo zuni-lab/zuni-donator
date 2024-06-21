@@ -73,6 +73,16 @@ export const Footer: IComponent = () => {
                 Discord <ArrowTopRightIcon width="16" height="16" />
               </span>
             </NavbarLink>
+            <NavbarLink href="https://discord.gg/NhUfGfJwah">
+              <span className="flex items-center gap-1 px-2">
+                Telegram <ArrowTopRightIcon width="16" height="16" />
+              </span>
+            </NavbarLink>
+            <NavbarLink href="https://discord.gg/NhUfGfJwah">
+              <span className="flex items-center gap-1 px-2">
+                Email <ArrowTopRightIcon width="16" height="16" />
+              </span>
+            </NavbarLink>
           </div>
         </div>
       </div>

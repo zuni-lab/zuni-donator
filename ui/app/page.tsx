@@ -1,6 +1,7 @@
 import { Button } from '@/components/shadcn/Button';
 import { Metadata } from 'next';
 import { RecentVaultSection } from './sections/RecentVaultSection';
+import { StatSection } from './sections/StatSection';
 
 export const metadata: Metadata = {
   description: 'Zuni Vault',
@@ -21,6 +22,7 @@ export default function HomePage() {
       </div>
       <div className='my-12 h-[2px] max-w-6xl mx-auto bg-white'></div>
       <RecentVaultSection />
+      <StatSection />
     </main>
   );
 }

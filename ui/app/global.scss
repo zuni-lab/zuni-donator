@@ -97,10 +97,27 @@ input:focus {
   box-shadow: 15px 15px 30px 0 #00000014;
 }
 
-section, .section {
+section,
+.section {
   @apply max-w-6xl mx-auto py-16;
 }
 
 h1.title {
   @apply text-4xl font-semibold py-2;
+}
+
+.statItem .value {
+  text-shadow:
+    2px 0 #3874f5,
+    -2px 0 #3874f5,
+    0 2px #3874f5,
+    0 -2px #3874f5,
+    1px 1px #3874f5,
+    -1px -1px #3874f5,
+    1px -1px #3874f5,
+    -1px 1px #3874f5;
+  color: black;
+  font-size: 7.5rem;
+  align-items: center;
+  font-weight: 600;
 }
