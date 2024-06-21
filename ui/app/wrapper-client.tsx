@@ -16,7 +16,7 @@ import { Authentication } from './Authentication';
 
 export const Navigation: IComponent = () => {
   return (
-    <div className="py-8 px-20 flex justify-end">
+    <div className="py-8 px-20 flex justify-end items-center">
       <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
@@ -47,7 +47,7 @@ export const Navigation: IComponent = () => {
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
-          <NavigationMenuItem className="min-w-48 flex justify-end">
+          <NavigationMenuItem className="pl-8 flex justify-end">
             <div className='w-max'>
               <AccountConnect />
             </div>

@@ -93,6 +93,6 @@ input:focus {
 .glass {
   -webkit-backdrop-filter: blur(22.5px);
   backdrop-filter: blur(22.5px);
-  background: linear-gradient(137deg, rgba(255, 255, 255, -0.388235), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(137deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, -0.388235));
   box-shadow: 15px 15px 30px 0 #00000014;
 }

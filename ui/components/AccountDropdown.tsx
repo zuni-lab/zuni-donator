@@ -3,12 +3,13 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { clsx } from 'clsx';
 import { useAccount } from 'wagmi';
 import { AccountInfoPanel } from './AccountInfoPanel';
+import { CircleUserRoundIcon } from 'lucide-react';
 
 const DropdownMenuContentStyle = {
   marginTop: '-22px',
 };
 
-export function AccountDropdown() {
+export const AccountDropdown: IComponent = () => {
   const { address } = useAccount();
 
   return (
@@ -16,8 +17,9 @@ export function AccountDropdown() {
       <DropdownMenu.Trigger asChild>
         <div className="flex h-8 w-8 items-center justify-center">
           {address && (
-            <button type="button" aria-label="Disconnect">
-              <Avatar address={address} />
+            <button type="button" aria-label="Disconnect" className="bg-accent p-1.5 rounded-lg border border-primary/40">
+              {/* <Avatar address={address} /> */}
+              <CircleUserRoundIcon className="w-6 h-6" />
             </button>
           )}
         </div>
@@ -28,13 +30,12 @@ export function AccountDropdown() {
           sideOffset={40}
           className={clsx(
             'h-42 inline-flex w-60 flex-col items-start justify-start',
-            'rounded-lg bg-neutral-900 bg-opacity-90 px-6 pb-2 pt-6 shadow backdrop-blur-2xl',
+            'rounded-lg bg-neutral-900 bg-opacity-90 px-6 pb-2 pt-6 shadow backdrop-blur-2xl'
           )}
-          style={DropdownMenuContentStyle}
-        >
+          style={DropdownMenuContentStyle}>
           <AccountInfoPanel />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );
-}
+};
