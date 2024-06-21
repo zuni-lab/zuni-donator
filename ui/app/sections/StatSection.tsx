@@ -12,8 +12,6 @@ export const StatSection: IComponent = () => {
   );
 };
 
-
-
 const StatItem: IComponent<{
   title: string;
   value: string | number;

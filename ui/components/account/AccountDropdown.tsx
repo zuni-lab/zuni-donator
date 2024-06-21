@@ -1,9 +1,8 @@
-import { Avatar } from '@coinbase/onchainkit/identity';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { clsx } from 'clsx';
+import { CircleUserRoundIcon } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { AccountInfoPanel } from './AccountInfoPanel';
-import { CircleUserRoundIcon } from 'lucide-react';
 
 const DropdownMenuContentStyle = {
   marginTop: '-22px',
@@ -17,7 +16,10 @@ export const AccountDropdown: IComponent = () => {
       <DropdownMenu.Trigger asChild>
         <div className="flex h-8 w-8 items-center justify-center">
           {address && (
-            <button type="button" aria-label="Disconnect" className="bg-accent p-1.5 rounded-lg border border-primary/40">
+            <button
+              type="button"
+              aria-label="Disconnect"
+              className="bg-accent p-1.5 rounded-lg border border-primary/40">
               {/* <Avatar address={address} /> */}
               <CircleUserRoundIcon className="w-6 h-6" />
             </button>

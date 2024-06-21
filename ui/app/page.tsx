@@ -20,7 +20,7 @@ export default function HomePage() {
         </p>
         <Button className="h-12 text-lg px-6">Get Started</Button>
       </div>
-      <div className='my-12 h-[2px] max-w-6xl mx-auto bg-white'></div>
+      <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div>
       <RecentVaultSection />
       <StatSection />
     </main>

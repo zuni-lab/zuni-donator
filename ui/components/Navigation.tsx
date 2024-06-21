@@ -2,11 +2,11 @@ import Link from 'next/link';
 
 import { AccountConnect } from '@/components/account/AccountConnect';
 import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuLink,
-    NavigationMenuList,
-    navigationMenuTriggerStyle,
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
 } from '@/components/shadcn/Navigation';
 
 export const Navigation: IComponent = () => {

@@ -50,7 +50,7 @@ export const AccountConnect: IComponent = () => {
         </div>
       </>
     );
-  }, [account.status, chainId, disconnect]);
+  }, [account.status, chainId, disconnect, connect, connector]);
 
   return (
     <div

@@ -30,8 +30,7 @@ export function AccountInfoPanel() {
         type="button"
         aria-label="Disconnect"
         className="my-4 inline-flex items-center justify-between self-stretch"
-        onClick={handleDisconnectWallet}
-      >
+        onClick={handleDisconnectWallet}>
         <span className="font-inter w-32 text-left text-base font-medium text-white">Log out</span>
         <ExitIcon className="relative h-4 w-4" />
       </button>
