@@ -6,7 +6,6 @@ export const getFormattedTimeAndDate = (inputDate: string | number) => {
   return date.isValid() ? formattedDate : 'Never';
 };
 
-
 // HH, DD/MM/YYYY
 
 export const getFormattedDate = (inputDate: string | number) => {

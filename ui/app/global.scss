@@ -106,6 +106,10 @@ h1.title {
   @apply text-4xl font-semibold py-2;
 }
 
+h2.subtitle {
+  @apply text-2xl font-semibold py-2;
+}
+
 .statItem .value {
   text-shadow:
     2px 0 #3874f5,

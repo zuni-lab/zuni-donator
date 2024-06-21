@@ -9,8 +9,8 @@ export const RecentVaultSection: IComponent = () => {
   return (
     <section className="mt-8">
       <h1 className="title">Recent Vaults</h1>
-      <div className="mt-4 w-full grid grid-cols-4 gap-8">
-        {MockVaults.slice(0, 6).map((vault, index) => (
+      <div className="mt-4 w-full grid grid-cols-3 gap-8">
+        {MockVaults.slice(0, 6).map((vault) => (
           <VaultCard key={vault.uuid} {...vault} />
         ))}
       </div>

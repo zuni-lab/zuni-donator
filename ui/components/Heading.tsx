@@ -7,7 +7,7 @@ export const Heading: IComponent<{
   size?: 'lg' | 'md' | 'sm';
 }> = ({ title, description, size = 'lg', tiltleClassName }) => {
   return (
-    <div className='flex flex-col items-center gap-8'>
+    <div className="flex flex-col items-center gap-8">
       <h1
         className={cx(
           'font-bold text-center',

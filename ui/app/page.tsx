@@ -3,12 +3,10 @@ import { Metadata } from 'next';
 import { RecentVaultSection } from './sections/RecentVaultSection';
 import { StatSection } from './sections/StatSection';
 import { Heading } from '@/components/Heading';
+import { AboutSection } from './sections/AboutSection';
+import { RouterMeta } from '@/constants/router';
 
-export const metadata: Metadata = {
-  description: 'Zuni Vault',
-  icons: '/favicon.ico',
-  title: 'Zuni Vault',
-};
+export const metadata: Metadata = RouterMeta.Home;
 
 export default function HomePage() {
   return (
@@ -21,6 +19,7 @@ export default function HomePage() {
         <Button className="h-12 text-lg px-6">Get Started</Button>
       </div>
       <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div>
+      <AboutSection />
       <RecentVaultSection />
       <StatSection />
     </main>

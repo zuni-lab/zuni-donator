@@ -19,7 +19,7 @@ export const AccountDropdown: IComponent = () => {
             <button
               type="button"
               aria-label="Disconnect"
-              className="bg-accent p-1.5 rounded-lg border border-primary/40">
+              className="bg-primary hover:opacity-90 p-1.5 rounded-lg border border-primary/40">
               {/* <Avatar address={address} /> */}
               <CircleUserRoundIcon className="w-6 h-6" />
             </button>

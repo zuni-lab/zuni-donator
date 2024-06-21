@@ -8,12 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/Card';
-import { getFormattedDate } from '@/utils/datetime';
+import { getFormattedTimeAndDate } from '@/utils/datetime';
 import { formatWalletAddress } from '@/utils/hex';
+import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { CopyToClipboard } from '../CopyToClipboard';
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 
 export const VaultCard: IComponent<TVault> = ({
   uuid,
@@ -31,14 +30,15 @@ export const VaultCard: IComponent<TVault> = ({
       linkTitle="Explore the vault"
       className="min-h-[400px] hover:scale-105 duration-150 group"
       renderFooter={() => (
-        <div className="w-full flex items-center justify-between text-xs">
+        <div className="w-full flex items-center justify-between text-sm">
           <CopyToClipboard text={creator}>
             By <span className="text-primary font-bold">@{formatWalletAddress(creator)}</span>
           </CopyToClipboard>
-          <span>{getFormattedDate(createdAt)}</span>
+          <span>At {getFormattedTimeAndDate(createdAt)}</span>
         </div>
       )}>
       <div>
+        <h4 className="text-xl">#{uuid}</h4>
         {rules.map((rule, index) => (
           <div key={index}>{rule}</div>
         ))}
@@ -56,10 +56,10 @@ const CardContainer: IComponent<{
   linkTitle?: string;
 }> = ({ title, description, className, link, linkTitle, renderFooter, children }) => {
   return (
-    <Card className={`flex flex-col justify-between bg-accent shadow-md rounded-md ${className}`}>
+    <Card className={`flex flex-col justify-between glass shadow-md rounded-md ${className}`}>
       <CardHeader>
         <CardTitle className="line-clamp-2">{title}</CardTitle>
-        <CardDescription className="line-clamp-2 min-h-11">{description}</CardDescription>
+        <CardDescription className="line-clamp-2 min-h-8">{description}</CardDescription>
         <hr />
       </CardHeader>
       <CardContent className="grow">{children}</CardContent>

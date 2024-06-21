@@ -9,6 +9,7 @@ import {
   navigationMenuTriggerStyle,
 } from '@/components/shadcn/Navigation';
 import { LogoSvg } from './icons/LogoSvg';
+import { AppRouter } from '@/constants/router';
 
 export const Navigation: IComponent = () => {
   return (
@@ -19,34 +20,18 @@ export const Navigation: IComponent = () => {
       <div className="py-8 px-20 flex justify-end items-center">
         <NavigationMenu>
           <NavigationMenuList>
-            <NavigationMenuItem>
-              <Link href="/docs" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  About
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/vaults" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Vaults
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/docs" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Policy
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/docs" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Documentation
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
+            {Object.entries(AppRouter)
+              .filter(([k]) => k !== 'Home')
+              .map(([k, v]) => (
+                <NavigationMenuItem key={v}>
+                  <Link href={v} passHref legacyBehavior>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      {k}
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              ))}
+
             <NavigationMenuItem className="pl-8 flex justify-end">
               <div className="w-max">
                 <AccountConnect />
