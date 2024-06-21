@@ -5,7 +5,7 @@ import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 const ProgressBarClient: IComponent = () => {
   return (
     <>
-      <ProgressBar height="4px" color="#004949" options={{ showSpinner: false }} shallowRouting />
+      <ProgressBar height="4px" color="#fff" options={{ showSpinner: false }} shallowRouting />
     </>
   );
 };

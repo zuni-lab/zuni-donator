@@ -2,6 +2,7 @@
 export const StatSection: IComponent = () => {
   return (
     <section className="mt-8">
+      <h1 className="title">Onchain Stats</h1>
       <div className="mt-4 w-full grid grid-cols-4 gap-4">
         <StatItem title="Users using the platform" value={1000} />
         <StatItem title="Vaults created" value={92} />

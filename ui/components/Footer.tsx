@@ -2,31 +2,13 @@
 
 import { ArrowTopRightIcon, GitHubLogoIcon } from '@radix-ui/react-icons';
 import NextLink from 'next/link';
+import { NavbarLink } from './NavLink';
 import { LogoSvg } from './icons/LogoSvg';
-import { cx } from 'class-variance-authority';
-
-export const NavbarLink: IComponent<{
-  href: string;
-  children: React.ReactNode;
-  target?: string;
-  ariaLabel?: string;
-  className?: string;
-}> = ({ href, className, children, target, ariaLabel }) => {
-  return (
-    <NextLink
-      href={href}
-      className={cx('px-0 text-center text-base font-normal text-white no-underline', className)}
-      target={target}
-      aria-label={ariaLabel}>
-      {children}
-    </NextLink>
-  );
-};
 
 export const Footer: IComponent = () => {
   return (
-    <footer className="section flex flex-1 flex-col justify-end py-20">
-      <div className="flex flex-col justify-between gap-16 bg-boat-footer-dark-gray py-12">
+    <footer className="bg-black">
+      <div className="section py-20 !min-h-max">
         <div className="container mx-auto flex w-full flex-col justify-between gap-16 px-8 md:flex-row">
           <div className="flex flex-col justify-between">
             <div className="flex h-8 items-center justify-start gap-2">
