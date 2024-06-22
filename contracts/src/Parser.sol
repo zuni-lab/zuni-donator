@@ -1,60 +1,72 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.25 <0.9.0;
 
+import { EmptyInput, UnsupportedType, Type } from "./Common.sol";
+
 library Parser {
-    // Using bytes1 instead of string for delimiter and blank space to save gas
-    bytes1 private constant DELIMITER = ",";
-    bytes1 private constant BLANK_SPACE = " ";
+  bytes1 private constant COMMA = ",";
+  bytes1 private constant BLANK_SPACE = " ";
 
-    error EmptyInput();
+  function extractTypes(string memory self) public pure returns (Type[] memory) {
+    return extractTypes(bytes(self));
+  }
 
-    function extractTypes(string memory self) public pure returns (string[] memory) {
-        bytes memory inputBytes = bytes(self);
-        if (inputBytes.length == 0) {
-            revert EmptyInput();
-        }
-
-        uint256 count = _countDelimiters(inputBytes);
-
-        string[] memory output = new string[](count);
-        uint256 outputIndex = 0;
-        uint256 start = 0;
-
-        for (uint256 i = 0; i <= inputBytes.length; i++) {
-            if (i == inputBytes.length || inputBytes[i] == DELIMITER) {
-                if (i > 0) {
-                    // Ensure non-empty segment
-                    output[outputIndex++] = _extractSubstring(inputBytes, start, i - 2);
-                }
-                start = i + 1; // Move start to character after current delimiter
-            }
-        }
-        return output;
+  function extractTypes(bytes memory self) public pure returns (Type[] memory) {
+    if (self.length == 0) {
+      revert EmptyInput();
     }
 
-    function _countDelimiters(bytes memory inputBytes) private pure returns (uint256) {
-        uint256 count = 1;
-        for (uint256 i = 0; i < inputBytes.length; i++) {
-            if (inputBytes[i] == DELIMITER) {
-                count++;
-            }
-        }
-        return count;
-    }
+    uint256 count = _countDelimiters(self);
 
-    function _extractSubstring(
-        bytes memory inputBytes,
-        uint256 start,
-        uint256 end
-    )
-        private
-        pure
-        returns (string memory)
-    {
+    Type[] memory output = new Type[](count);
+    uint256 outputIndex = 0;
+    uint256 start = 0;
+
+    for (uint256 i = 0; i <= self.length; i++) {
+      if (i == self.length || self[i] == COMMA) {
+        uint256 end = i - 1;
+        while (start < end && self[start] == BLANK_SPACE) {
+          start++;
+        }
+        while (end > start && self[end] != BLANK_SPACE) {
+          end--;
+        }
+
         bytes memory substring = new bytes(end - start);
         for (uint256 j = start; j < end; j++) {
-            substring[j - start] = inputBytes[j];
+          substring[j - start] = self[j];
         }
-        return string(substring);
+        output[outputIndex++] = _bytesToType(substring);
+        start = i + 1;
+      }
     }
+    return output;
+  }
+
+  function _countDelimiters(bytes memory self) private pure returns (uint256) {
+    uint256 count = 1;
+    for (uint256 i = 0; i < self.length; i++) {
+      if (self[i] == COMMA) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  function _bytesToType(bytes memory b) private pure returns (Type) {
+    if (keccak256(b) == keccak256("string")) {
+      return Type.STRING;
+    } else if (keccak256(b) == keccak256("bytes")) {
+      return Type.BYTES;
+    } else if (keccak256(b) == keccak256("uint")) {
+      return Type.UINT;
+    } else if (keccak256(b) == keccak256("int")) {
+      return Type.INT;
+    } else if (keccak256(b) == keccak256("address")) {
+      return Type.ADDRESS;
+    } else if (keccak256(b) == keccak256("bool")) {
+      return Type.BOOL;
+    }
+    revert UnsupportedType();
+  }
 }
