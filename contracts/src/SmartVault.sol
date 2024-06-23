@@ -2,7 +2,7 @@
 pragma solidity >=0.8.25 <0.9.0;
 
 import { IEAS, ISchemaRegistry } from "@eas/contracts/IEAS.sol";
-import { AttestationRequest, AttestationRequestData } from "@eas/contracts/IEAS.sol";
+import { Attestation, AttestationRequest, AttestationRequestData } from "@eas/contracts/IEAS.sol";
 import { NO_EXPIRATION_TIME, EMPTY_UID } from "@eas/contracts/Common.sol";
 
 import {
@@ -17,6 +17,8 @@ import {
     InvalidThresholds
 } from "./Common.sol";
 import { Parser } from "./Parser.sol";
+
+import { console2 } from "forge-std/src/console2.sol";
 
 struct Rules {
     Type[] types;
@@ -102,11 +104,14 @@ contract SmartVault {
         bytes32 vaultId = _EAS.attest(AttestationRequest({ schema: schemaUID, data: data }));
         rules[vaultId] = Rules({ types: types, operators: ops, thresholds: thresholds });
         vaultSchemas[vaultId] = schema;
+        console2.log("Vault created with id:");
+        console2.logBytes32(vaultId);
     }
 
-    //   function deposit(bytes32 vaultId) external {
-    //     // TODO: check time ...
-    //   }
+    function deposit(bytes32 vaultId) external {
+        // TODO: check time ...
+        Attestation memory attestation = _EAS.getAttestation(vaultId);
+    }
 
     //   function claim(bytes32 vaultId, bytes32 attestionUID) external {
     //     Attestation memory attestation = _eas.getAttestation(attestionUID);

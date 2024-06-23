@@ -4,55 +4,16 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/src/Test.sol";
 import { SmartVault } from "../src/SmartVault.sol";
-import { IEAS, EAS, Attestation } from "@eas/contracts/EAS.sol";
+import { EAS } from "@eas/contracts/EAS.sol";
 
 import { SchemaRegistry } from "@eas/contracts/SchemaRegistry.sol";
-import { SchemaResolver } from "@eas/contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "@eas/contracts/resolver/ISchemaResolver.sol";
 
-import { console2 } from "forge-std/src/console2.sol";
-
 import { Operator } from "../src/Common.sol";
+import { MockSchemaResolver } from "../src/MockResolver.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
-
-contract MockSchemaResolver is SchemaResolver {
-    constructor(IEAS eas) SchemaResolver(eas) { }
-
-    error OutOfBounds();
-
-    function onAttest(Attestation calldata attestation, uint256 /*value*/ ) internal pure override returns (bool) {
-        //log the attestation.data as hex
-        console2.log("attestation.data: ", string(attestation.data));
-        return true;
-    }
-
-    function onRevoke(Attestation calldata, /*attestation*/ uint256 /*value*/ ) internal pure override returns (bool) {
-        return true;
-    }
-
-    function toBytes32(bytes memory data, uint256 start) external pure returns (bytes32) {
-        return _toBytes32(data, start);
-    }
-
-    function _toBytes32(bytes memory data, uint256 start) private pure returns (bytes32) {
-        unchecked {
-            if (data.length < start + 32) {
-                revert OutOfBounds();
-            }
-        }
-
-        bytes32 tempBytes32;
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            tempBytes32 := mload(add(add(data, 0x20), start))
-        }
-
-        return tempBytes32;
-    }
-}
 
 contract SmartVaultTest is Test {
     SmartVault private smartVault;
