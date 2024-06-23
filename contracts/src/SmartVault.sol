@@ -14,11 +14,10 @@ import {
     DepositStartInvalid,
     DepositEndInvalid,
     InvalidOperators,
-    InvalidThresholds
+    InvalidThresholds,
+    DepositNotStarted
 } from "./Common.sol";
 import { Parser } from "./Parser.sol";
-
-import { console2 } from "forge-std/src/console2.sol";
 
 struct Rules {
     Type[] types;
@@ -33,7 +32,8 @@ contract SmartVault {
     ISchemaRegistry private immutable _SCHEMA_REGISTRY;
 
     mapping(bytes32 vaultUid => Rules rules) private rules;
-    mapping(bytes32 vaultUid => string) private vaultSchemas;
+    mapping(bytes32 vaultUid => string schema) private vaultSchemas;
+    mapping(bytes32 vaultUid => uint256 balance) private vaultBalances;
 
     constructor(IEAS eas, ISchemaRegistry schemaRegistry) {
         if (address(eas) == address(0)) {
@@ -105,19 +105,17 @@ contract SmartVault {
         bytes32 vaultId = _EAS.attest(AttestationRequest({ schema: schemaUID, data: data }));
         rules[vaultId] = Rules({ types: types, operators: ops, thresholds: thresholds });
         vaultSchemas[vaultId] = schema;
-        console2.log("Vault created with id:");
-        console2.logBytes32(vaultId);
-        console2.log("Schema:");
-        console2.log(schema);
         return vaultId;
     }
 
-    function deposit(bytes32 vaultId) external {
-        // TODO: check time ...
+    function deposit(bytes32 vaultId) external payable {
         Attestation memory attestation = _EAS.getAttestation(vaultId);
 
-        console2.log("Deposit attestation:");
-        console2.logBytes32(attestation.schema);
+        (uint256 depositStart, uint256 depositEnd) = _getDepositTimeFromAttestationData(attestation.data);
+        if (block.timestamp < depositStart || block.timestamp > depositEnd) {
+            revert DepositNotStarted();
+        }
+        vaultBalances[vaultId] += msg.value;
     }
 
     //   function claim(bytes32 vaultId, bytes32 attestionUID) external {
@@ -213,5 +211,17 @@ contract SmartVault {
 
     function getSchemaRegistry() external view returns (ISchemaRegistry) {
         return _SCHEMA_REGISTRY;
+    }
+
+    function _getDepositTimeFromAttestationData(bytes memory data)
+        private
+        pure
+        returns (uint256 depositStart, uint256 depositEnd)
+    {
+        assembly {
+            // skip length, name, description
+            depositStart := mload(add(data, 0x60))
+            depositEnd := mload(add(data, 0x80))
+        }
     }
 }

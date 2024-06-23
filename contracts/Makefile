@@ -1,4 +1,4 @@
-.PHONY: test deploy call
+.PHONY: test deploy cmd
 PRIVATE_KEY=${DEV_PRIVATE_KEY}
 
 test:
@@ -10,12 +10,8 @@ endif
 
 deploy:
 	forge script script/Deploy.s.sol:DeploySmartVault --broadcast --fork-url http://localhost:8545
-call:
-	@echo "DEV_PRIVATE_KEY=$(PRIVATE_KEY)"
-	@echo "Method: $(method)"
-ifeq ($(method), register-schema)
-	
-endif
+cmd:
+	bun run script/cmd.ts
 
 	
 

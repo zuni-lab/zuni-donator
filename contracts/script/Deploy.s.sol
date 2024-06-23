@@ -21,9 +21,11 @@ contract DeploySmartVault is BaseScript {
         sm = new SmartVault(eas, schemaRegistry);
         resolver = new MockSchemaResolver(eas);
 
-        string memory registryEnv = string(abi.encodePacked("SCHEMA_REGISTRY_ADDRESS", "=", addressToString(address(schemaRegistry))));
+        string memory registryEnv =
+            string(abi.encodePacked("SCHEMA_REGISTRY_ADDRESS", "=", addressToString(address(schemaRegistry))));
         string memory easEnv = string(abi.encodePacked("EAS_ADDRESS", "=", addressToString(address(eas))));
-        string memory resolverEnv = string(abi.encodePacked("RESOLVER_ADDRESS", "=", addressToString(address(resolver))));
+        string memory resolverEnv =
+            string(abi.encodePacked("RESOLVER_ADDRESS", "=", addressToString(address(resolver))));
         string memory smEnv = string(abi.encodePacked("SMART_VAULT_ADDRESS", "=", addressToString(address(sm))));
 
         console2.log(registryEnv);

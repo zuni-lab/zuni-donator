@@ -4,16 +4,12 @@ pragma solidity >=0.8.25 <0.9.0;
 import { SchemaResolver } from "@eas/contracts/resolver/SchemaResolver.sol";
 import { IEAS, Attestation } from "@eas/contracts/EAS.sol";
 
-import { console2 } from "forge-std/src/console2.sol";
-
 contract MockSchemaResolver is SchemaResolver {
     constructor(IEAS eas) SchemaResolver(eas) { }
 
     error OutOfBounds();
 
-    function onAttest(Attestation calldata attestation, uint256 /*value*/ ) internal pure override returns (bool) {
-        //log the attestation.data as hex
-        console2.log("attestation.data: ", string(attestation.data));
+    function onAttest(Attestation calldata, uint256 /*value*/ ) internal pure override returns (bool) {
         return true;
     }
 

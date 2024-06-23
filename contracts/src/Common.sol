@@ -29,3 +29,4 @@ error DepositStartInvalid();
 error DepositEndInvalid();
 error InvalidOperators();
 error InvalidThresholds();
+error DepositNotStarted();
