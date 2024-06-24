@@ -1,4 +1,3 @@
+@eas=node_modules/@ethereum-attestation-service/eas-contracts
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
 forge-std/=node_modules/forge-std/
-@lib/=lib/
-@eas=node_modules/@ethereum-attestation-service/eas-contracts

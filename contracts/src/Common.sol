@@ -12,21 +12,11 @@ enum Operator {
 }
 
 enum Type {
-    STRING,
-    BYTES,
-    UINT,
-    INT,
+    UINT256,
+    INT256,
+    BYTES32,
     ADDRESS,
-    BOOL
+    BOOL,
+    BYTES,
+    STRING
 }
-
-error EmptyInput();
-error UnsupportedType();
-error InvalidEAS();
-error InvalidSchemaRegistry();
-error NameEmpty();
-error DepositStartInvalid();
-error DepositEndInvalid();
-error InvalidOperators();
-error InvalidThresholds();
-error DepositNotStarted();
