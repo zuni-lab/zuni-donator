@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.25 <0.9.0;
 
-import { EmptyInput, UnsupportedType, Type } from "./Common.sol";
+import { Type } from "../Common.sol";
 
 library Parser {
     bytes1 private constant COMMA = ",";
     bytes1 private constant BLANK_SPACE = " ";
+
+    /// @notice Thrown when type list is empty
+    error EmptyTypeList();
+
+    /// @notice Thrown when type is not supported
+    error UnsupportedType();
 
     function extractTypes(string memory self) public pure returns (Type[] memory) {
         return extractTypes(bytes(self));
@@ -13,7 +19,7 @@ library Parser {
 
     function extractTypes(bytes memory self) public pure returns (Type[] memory) {
         if (self.length == 0) {
-            revert EmptyInput();
+            revert EmptyTypeList();
         }
 
         uint256 count = _countDelimiters(self);
@@ -54,18 +60,20 @@ library Parser {
     }
 
     function _bytesToType(bytes memory b) private pure returns (Type) {
-        if (keccak256(b) == keccak256("string")) {
-            return Type.STRING;
-        } else if (keccak256(b) == keccak256("bytes")) {
-            return Type.BYTES;
-        } else if (keccak256(b) == keccak256("uint")) {
-            return Type.UINT;
-        } else if (keccak256(b) == keccak256("int")) {
-            return Type.INT;
+        if (keccak256(b) == keccak256("uint256")) {
+            return Type.UINT256;
+        } else if (keccak256(b) == keccak256("int256")) {
+            return Type.INT256;
+        } else if (keccak256(b) == keccak256("bytes32")) {
+            return Type.BYTES32;
         } else if (keccak256(b) == keccak256("address")) {
             return Type.ADDRESS;
         } else if (keccak256(b) == keccak256("bool")) {
             return Type.BOOL;
+        } else if (keccak256(b) == keccak256("bytes")) {
+            return Type.BYTES;
+        } else if (keccak256(b) == keccak256("string")) {
+            return Type.STRING;
         }
         revert UnsupportedType();
     }

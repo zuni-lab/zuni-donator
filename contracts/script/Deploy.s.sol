@@ -6,7 +6,7 @@ import { SmartVault } from "../src/SmartVault.sol";
 import { EAS } from "@eas/contracts/EAS.sol";
 
 import { SchemaRegistry } from "@eas/contracts/SchemaRegistry.sol";
-import { MockSchemaResolver } from "../src/MockResolver.sol";
+import { MockSchemaResolver } from "src/mocks/MockResolver.sol";
 import { console2 } from "forge-std/src/console2.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
@@ -16,9 +16,10 @@ contract DeploySmartVault is BaseScript {
         broadcast
         returns (SchemaRegistry schemaRegistry, EAS eas, MockSchemaResolver resolver, SmartVault sm)
     {
+        bytes32 vaultSchema;
         schemaRegistry = new SchemaRegistry();
         eas = new EAS(schemaRegistry);
-        sm = new SmartVault(eas, schemaRegistry);
+        sm = new SmartVault(vaultSchema);
         resolver = new MockSchemaResolver(eas);
 
         string memory registryEnv =
