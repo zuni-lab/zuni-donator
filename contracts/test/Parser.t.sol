@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import { Parser } from "src/libraries/Parser.sol";
 import { Type } from "src/Common.sol";
+import { Parser } from "src/libraries/Parser.sol";
 
 contract ParserTest is Test {
     using Parser for string;
