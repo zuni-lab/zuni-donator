@@ -9,11 +9,11 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky",
     "dev": "bun --filter='ui' dev",
     "build": "bun --filter='ui' build",
     "start": "bun --filter='ui' start",
     "lint": "bun --filter='ui' run lint",
-  
     "cleanc": "bun --filter='contracts' run clean",
     "buildc": "bun --filter='contracts' run build",
     "cmdc": "bun --filter='contracts' run cmd",
@@ -21,5 +21,13 @@
     "testc": "bun --filter='contracts' run test",
     "testc:coverage": "bun --filter='contracts' run test:coverage",
     "testc:coverage:report": "bun --filter='contracts' run test:coverage:report"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "bun --filter='ui' run lint && bun --filter='contracts' run lint"
+    }
   }
 }
