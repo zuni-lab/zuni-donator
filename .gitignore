@@ -1,1 +1,11 @@
 **/.DS_Store
+node_modules
+
+**.log
+
+# local env files
+*.env*
+
+# cache
+.eslintcache
+**.vscode
