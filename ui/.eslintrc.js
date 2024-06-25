@@ -1,13 +1,6 @@
 module.exports = {
-  env: { browser: true, es2021: true, jest: true },
-  extends: [
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:@typescript-eslint/recommended',
-    'next/core-web-vitals',
-    'prettier',
-    'next',
-  ],
+  root: true,
+  extends: ['base', 'plugin:react-hooks/recommended', 'next/core-web-vitals', 'next'],
   overrides: [
     {
       files: ['*.js'],
@@ -20,7 +13,6 @@ module.exports = {
       rules: { '@typescript-eslint/ban-types': 'off' },
     },
   ],
-  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
@@ -29,7 +21,6 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['react', '@typescript-eslint', 'import', 'prettier'],
-  root: true,
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',
     'arrow-body-style': 'off',

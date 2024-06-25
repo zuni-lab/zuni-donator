@@ -1,5 +1,5 @@
 {
-  "name": "smart-vault",
+  "name": "contracts",
   "version": "1.0.0",
   "author": {
     "name": "Vinh Tran",
@@ -25,6 +25,7 @@
   "scripts": {
     "clean": "rm -rf cache out",
     "build": "forge build",
+    "cmd": "bun run script/cmd.ts",
     "lint": "bun run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && bun solhint {script,src,test}/**/*.sol",
     "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
