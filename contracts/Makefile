@@ -12,8 +12,3 @@ deploy:
 	forge script script/Deploy.s.sol:DeploySmartVault --broadcast --fork-url http://localhost:8545
 cmd:
 	bun run script/cmd.ts
-
-	
-
-
-
