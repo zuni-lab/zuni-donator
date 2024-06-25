@@ -13,7 +13,8 @@
     "@openzeppelin/upgrades-core": "^1.34.1",
     "chalk": "^5.3.0",
     "ethers": "^6.13.1",
-    "openzeppelin-foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades"
+    "openzeppelin-foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades",
+    "solidity-stringutils": "github:Arachnid/solidity-stringutils"
   },
   "devDependencies": {
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",

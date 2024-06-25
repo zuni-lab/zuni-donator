@@ -15,8 +15,8 @@ enum Type {
     UINT256,
     INT256,
     BYTES32,
+    BYTES,
     ADDRESS,
     BOOL,
-    BYTES,
     STRING
 }
