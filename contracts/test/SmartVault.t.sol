@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { EAS, IEAS } from "@eas/contracts/EAS.sol";
 import { ISchemaRegistry, SchemaRegistry } from "@eas/contracts/SchemaRegistry.sol";
 import { ISchemaResolver } from "@eas/contracts/resolver/ISchemaResolver.sol";
 
+import { Operator } from "src/Common.sol";
 import { SmartVault } from "src/SmartVault.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
-import { Operator } from "src/Common.sol";
 
 contract SmartVaultTest is Test {
     SmartVault private smartVault;
