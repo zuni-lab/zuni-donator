@@ -124,9 +124,9 @@ export const VaultForm: IComponent = () => {
   }, [isValidSchema]);
 
   useEffect(() => {
-    console.log("validationSchema: ", watch.validationSchema);
+    console.log('validationSchema: ', watch.validationSchema);
     debounce(() => {
-      console.log("Debounce validationSchema: ", watch.validationSchema);
+      console.log('Debounce validationSchema: ', watch.validationSchema);
       if (watch.validationSchema.length != 66 || !isValidHex(watch.validationSchema)) {
         return;
       }

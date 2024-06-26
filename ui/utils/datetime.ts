@@ -13,3 +13,9 @@ export const getFormattedDate = (inputDate: string | number) => {
   const formattedDate = date.format('DD/MM/YYYY');
   return date.isValid() ? formattedDate : 'Never';
 };
+
+export const toUtcTime = (date: Date) => {
+  const time = new Date(date);
+  time.setMinutes(time.getMinutes() - time.getTimezoneOffset());
+  return time;
+};
