@@ -3,7 +3,7 @@
 import { Button } from '@/components/shadcn/Button';
 import { Input } from '@/components/shadcn/Input';
 import { VaultCard } from '@/components/vault/VaultCard';
-import { VaultForm } from '@/components/vault/VaultForm';
+import { VaultDialog } from '@/components/vault/VaultDialog';
 import { useActionDebounce } from '@/hooks/useAction';
 import { Inbox, LoaderCircle, SearchIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -78,7 +78,7 @@ export const PageContent: IComponent<{
   return (
     <section className="mt-6">
       <div className="flex items-center justify-between">
-        <VaultForm />
+        <VaultDialog />
         {renderSearch}
       </div>
       <div className="w-full flex flex-col items-center justify-center">{renderVaults}</div>

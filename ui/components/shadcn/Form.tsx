@@ -81,10 +81,11 @@ FormItem.displayName = 'FormItem';
 
 type FormLabelProps = React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & {
   required?: boolean;
+  renderSuffix?: React.ReactNode;
 };
 
 const FormLabel = React.forwardRef<React.ElementRef<typeof LabelPrimitive.Root>, FormLabelProps>(
-  ({ className, required, ...props }, ref) => {
+  ({ className, required, renderSuffix, ...props }, ref) => {
     const { error, formItemId } = useFormField();
 
     return (
@@ -95,6 +96,7 @@ const FormLabel = React.forwardRef<React.ElementRef<typeof LabelPrimitive.Root>,
         {...props}>
         {props.children}
         {required && <span className="text-destructive text-sm">*</span>}
+        {renderSuffix && <span>{renderSuffix}</span>}
       </Label>
     );
   }
