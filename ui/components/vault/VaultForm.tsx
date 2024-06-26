@@ -6,14 +6,20 @@ import { Input } from '@/shadcn/Input';
 
 import { useActionDebounce } from '@/hooks/useAction';
 import { useSchemaStore } from '@/states/schema';
-import { getValidationSchema, parseValidationSchema } from '@/utils/rule';
-import { isValidBytes32 } from '@/utils/tools';
+import {
+  getOperatorLabel,
+  getValidationSchema,
+  isNumericType,
+  parseValidationSchema,
+} from '@/utils/rule';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader, ShieldBan, ShieldCheck } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { TooltipWrapper } from '../TooltipWrapper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../shadcn/Select';
+import { isValidBytesWithLength } from '@/utils/tools';
 
 const now = new Date().getTime(); // Current time in milliseconds
 const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
@@ -50,45 +56,61 @@ const baseFormSchema = z.object({
   validationSchema: z
     .string()
     .transform((val) => val.trim())
-    .refine((val) => isValidBytes32(val), {
+    .refine((val) => isValidBytesWithLength(val, 32), {
       message: 'Validation schema must be a valid bytes string, eg. 0x3a2fa...80a42',
     }),
 });
-// .refine(
-//   (data) => {
-//     const depositStart = new Date(data.depositStart).getTime();
-//     const depositEnd = new Date(data.depositEnd).getTime();
-//     return depositStart < depositEnd;
-//   },
-//   {
-//     message: 'Deposit start must be less than deposit end',
-//     path: ['depositStart'],
-//   }
-// );
 
 export const VaultForm: IComponent = () => {
   const { registry } = useSchemaStore();
   const debounce = useActionDebounce(1000, true);
 
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
-  const [parsedRules, setParsedRules] = useState<TDeclareStmt[]>([]);
+  const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const combinedSchema = baseFormSchema.extend(dynamicSchema.shape);
+  const combinedSchema = baseFormSchema.extend(dynamicSchema.shape).refine(
+    (data) => {
+      const depositStart = new Date(data.depositStart).getTime();
+      const depositEnd = new Date(data.depositEnd).getTime();
+      return depositStart < depositEnd;
+    },
+    {
+      message: 'Deposit end must be greater than deposit start',
+      path: ['depositEnd'],
+    }
+  );
+
+  let defaultValues = {
+    name: '',
+    description: '',
+    depositEnd: tenMinutesLater.toISOString().slice(0, 16),
+    depositStart: tenMinutesLater.toISOString().slice(0, 16),
+    validationSchema: '',
+  };
+
+  parsedRules.forEach((rule) => {
+    defaultValues = {
+      ...defaultValues,
+      [rule.name]: rule.defaultValue,
+      [`${rule.name}_op`]: '',
+    };
+  });
+
   const form = useForm({
     resolver: zodResolver(combinedSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      depositEnd: tenMinutesLater.toISOString().slice(0, 16),
-      depositStart: tenMinutesLater.toISOString().slice(0, 16),
-      validationSchema: '',
-    },
+    defaultValues,
   });
 
   const { control, handleSubmit, watch } = form;
 
   const watchValidationSchema = watch('validationSchema').trim();
+
+  const reset = useCallback(() => {
+    form.reset();
+    setParsedRules([]);
+    setDynamicSchema(z.object({}));
+  }, [form, setParsedRules, setDynamicSchema]);
 
   useEffect(() => {
     if (!registry) {
@@ -96,32 +118,29 @@ export const VaultForm: IComponent = () => {
     }
     debounce(async () => {
       setLoading(true);
-      if (!isValidBytes32(watchValidationSchema)) {
-        setParsedRules([]);
-        setDynamicSchema(z.object({}));
+      if (!isValidBytesWithLength(watchValidationSchema, 32)) {
+        reset();
         setLoading(false);
         return;
       }
       try {
         const schemaRecord = await registry?.getSchema({ uid: watchValidationSchema });
         if (!schemaRecord) {
-          setParsedRules([]);
-          setDynamicSchema(z.object({}));
+          reset();
         }
 
         const rules = parseValidationSchema(schemaRecord.schema);
         setParsedRules(rules);
         setDynamicSchema(getValidationSchema(rules));
       } catch (error) {
-        setParsedRules([]);
-        setDynamicSchema(z.object({}));
+        reset();
       } finally {
         setLoading(false);
       }
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchValidationSchema, registry, setParsedRules, setDynamicSchema]);
+  }, [watchValidationSchema, registry, reset]);
 
   const handlePressSubmit = handleSubmit((values) => {
     console.log('values: ', values);
@@ -247,156 +266,98 @@ export const VaultForm: IComponent = () => {
             <h3 className="text-center font-semibold text-sm text-gray-800 !my-4">
               Rules of vault
             </h3>
-            {parsedRules.map((rule, index) => {
-              return (
-                <FormField
-                  key={index}
-                  control={control}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  name={rule.name as any}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>{rule.name}</FormLabel>
-                      <FormControl>
-                        {/* {rule.type === 'address' && ( */}
-                        <Input
-                          placeholder={`The ${rule.name} of the vault`}
-                          {...field}
-                          className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                        />
-                        {/* )} */}
-                        {/* {rule.type === 'uint256' && (
-                            <Input
-                              type="number"
-                              placeholder="Number"
-                              {...field}
-                              className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                            />
-                          )}
-                          {rule.type === 'bool' && (
-                            <select
-                              {...field}
-                              className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700">
-                              <option value={'true'}>True</option>
-                              <option value={'false'}>False</option>
-                            </select>
-                          )}
-                          {rule.type === 'string' && (
-                            <Input
-                              placeholder="String"
-                              {...field}
-                              className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                            />
-                          )} */}
-                        {/* Add other input types based on `rule.type` */}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              );
-            })}
-
-            {/* 
-                  {parsedRules.map((rule, index) => (
+            <div className="max-h-[45vh] overflow-y-auto space-y-2">
+              {parsedRules.map((rule, index) => {
+                return (
+                  <div key={index} className="grid grid-cols-3 gap-2">
+                    <FormLabel className="col-span-3">
+                      {rule.name}
+                      <span className="ml-1 text-gray-500 text-xs">({rule.type})</span>
+                    </FormLabel>
+                    <FormField
+                      control={form.control}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      name={`${rule.name}_op` as any}
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Operator" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {rule.ops.map((op, index) => (
+                                <SelectItem key={index} value={op}>
+                                  {getOperatorLabel(op)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       key={index}
                       control={control}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       name={rule.name as any}
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel required>{rule.name}</FormLabel>
+                        <FormItem className="col-span-2">
                           <FormControl>
-                            {rule.type === 'address' && (
-                              <Input
-                                placeholder="Address"
-                                {...field}
-                                className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                              />
-                            )}
-                            {rule.type === 'uint256' && (
-                              <Input
-                                type="number"
-                                placeholder="Number"
-                                {...field}
-                                className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                              />
-                            )}
-                            {rule.type === 'bool' && (
-                              <select
-                                {...field}
-                                className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700">
-                                <option value={'true'}>True</option>
-                                <option value={'false'}>False</option>
-                              </select>
-                            )}
-                          
-                            {rule.type === 'string' && (
-                              <Input
-                                placeholder="String"
-                                {...field}
-                                className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                              />
-                            )}
-                           
+                            {(() => {
+                              if (isNumericType(rule.type)) {
+                                return (
+                                  <Input
+                                    // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
+                                    // type="number"
+                                    // min={getMinValue(rule.type)}
+                                    // max={getMaxValue(rule.type)}
+                                    placeholder={`The value of ${rule.name} threshold`}
+                                    {...field}
+                                    className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                                  />
+                                );
+                              } else if (rule.type === 'bool') {
+                                return (
+                                  <Select
+                                    // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="bg-white focus:ring-blue-300 border-blue-400 [&>*]:text-gray-700">
+                                        <SelectValue placeholder="Select a value" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="bg-white text-gray-700">
+                                      <SelectItem value={'true'}>True</SelectItem>
+                                      <SelectItem value={'false'}>False</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                );
+                              }
+
+                              return (
+                                <Input
+                                  // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
+                                  placeholder={`The value of ${rule.name} threshold`}
+                                  {...field}
+                                  className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                                />
+                              );
+                            })()}
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  ))} */}
+                  </div>
+                );
+              })}
+            </div>
           </>
         )}
-
-        {
-          // parsedRules.map((rule, index) => (
-          //   <FormField
-          //     key={index}
-          //     control={control}
-          //     name={rule.name}
-          //     render={({ field }) => (
-          //       <FormItem>
-          //         <FormLabel required>{rule.name}</FormLabel>
-          //         <FormControl>
-          //           <Input
-          //             placeholder={`The ${rule.name} of the vault`}
-          //             {...field}
-          //             className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-          //           />
-          //         </FormControl>
-          //         <FormMessage />
-          //       </FormItem>
-          //     )}
-          //   />
-          // ))
-        }
-
-        {/* <FormField
-              control={form.control}
-              name="ops"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a verified email to display" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="m@example.com">m@example.com</SelectItem>
-                      <SelectItem value="m@google.com">m@google.com</SelectItem>
-                      <SelectItem value="m@support.com">m@support.com</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    You can manage email addresses in your{' '}
-                    <Link href="/examples/forms">email settings</Link>.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
         <div className="flex items-center justify-center !my-4">
           <Button type="submit" className="px-4">
             Submit

@@ -73,4 +73,4 @@ export const SMART_VAULT_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
-];
+] as const;

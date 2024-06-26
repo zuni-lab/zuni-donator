@@ -34,10 +34,10 @@ export const isValidBytes = (val: string) => {
   return /^0x([0-9a-fA-F]{2})+$/.test(val);
 };
 
-export const isValidBytes32 = (val: string) => {
-  return /^0x([0-9a-fA-F]{64})$/.test(val);
+export const isValidBytesWithLength = (val: string, length: number) => {
+  return new RegExp(`^0x([0-9a-fA-F]{${length * 2}})$`).test(val);
 };
 
 export const isValidAddress = (val: string) => {
-  return /^0x[a-fA-F0-9]{40}$/.test(val);
+  return isValidBytesWithLength(val, 20);
 };
