@@ -144,6 +144,14 @@ contract SmartVault is ISmartVault {
                     validationData := add(validationData, 0x20)
                 }
                 _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES3) {
+                bytes3 value;
+                bytes3 threshold = abi.decode(rule.thresholds[i], (bytes3));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
             } else if (rule.types[i] == Type.BYTES4) {
                 bytes4 value;
                 bytes4 threshold = abi.decode(rule.thresholds[i], (bytes4));
@@ -187,6 +195,14 @@ contract SmartVault is ISmartVault {
             } else if (rule.types[i] == Type.INT16) {
                 int16 value;
                 int16 threshold = abi.decode(rule.thresholds[i], (int16));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT24) {
+                int24 value;
+                int24 threshold = abi.decode(rule.thresholds[i], (int24));
                 assembly {
                     value := mload(validationData)
                     validationData := add(validationData, 0x20)
