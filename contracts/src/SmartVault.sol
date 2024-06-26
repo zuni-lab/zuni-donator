@@ -5,17 +5,10 @@ import { EMPTY_UID, NO_EXPIRATION_TIME } from "@eas/contracts/Common.sol";
 import { IEAS, ISchemaRegistry } from "@eas/contracts/IEAS.sol";
 import { Attestation, AttestationRequest, AttestationRequestData } from "@eas/contracts/IEAS.sol";
 
-import { Operator, Type } from "./Common.sol";
-
-import { ISmartVault } from "./interfaces/ISmartVault.sol";
+import { ClaimData, ClaimType, Operator, Type } from "./Common.sol";
+import { ISmartVault, Rules } from "./interfaces/ISmartVault.sol";
 import { Parser } from "./libraries/Parser.sol";
 import { Predeploys } from "./libraries/Predeploys.sol";
-
-struct Rules {
-    Type[] types;
-    Operator[] operators;
-    bytes[] thresholds;
-}
 
 contract SmartVault is ISmartVault {
     using Parser for string;
@@ -23,10 +16,11 @@ contract SmartVault is ISmartVault {
     IEAS private constant _eas = IEAS(Predeploys.EAS);
     ISchemaRegistry private constant _schemaRegistry = ISchemaRegistry(Predeploys.SCHEMA_REGISTRY);
 
-    mapping(bytes32 vaultUid => Rules rules) private rules;
-    mapping(bytes32 vaultUid => uint256 balance) public vaultBalances;
+    mapping(bytes32 vaultId => Rules rules) private rules;
+    mapping(bytes32 vaultId => uint256 raised) public vaultRaised;
+    mapping(bytes32 vaultId => uint256 balance) public vaultBalance;
 
-    bytes32 public vaultSchema;
+    bytes32 public immutable vaultSchema;
 
     constructor(bytes32 _vaultSchema) {
         vaultSchema = _vaultSchema;
@@ -38,8 +32,9 @@ contract SmartVault is ISmartVault {
         uint256 depositStart,
         uint256 depositEnd,
         bytes32 validationSchema,
-        Operator[] memory ops,
-        bytes[] memory thresholds
+        Operator[] memory operators,
+        bytes[] memory thresholds,
+        ClaimData memory claimData
     )
         external
         returns (bytes32)
@@ -48,11 +43,7 @@ contract SmartVault is ISmartVault {
             revert NameEmpty();
         }
 
-        if (depositStart < block.timestamp) {
-            revert DepositStartInvalid();
-        }
-
-        if (depositStart >= depositEnd) {
+        if (depositStart >= depositEnd || depositEnd < block.timestamp) {
             revert DepositEndInvalid();
         }
 
@@ -69,15 +60,21 @@ contract SmartVault is ISmartVault {
 
         bytes32 vaultId = _eas.attest(AttestationRequest({ schema: vaultSchema, data: data }));
 
-        // parse data type from schema
         string memory schema = _schemaRegistry.getSchema(validationSchema).schema;
         Type[] memory types = schema.extractTypes();
 
-        if (types.length != ops.length || types.length != thresholds.length) {
+        if (types.length != operators.length || types.length != thresholds.length) {
             revert RulesLengthMismatch();
         }
 
-        rules[vaultId] = Rules({ types: types, operators: ops, thresholds: thresholds });
+        if (
+            (claimData.claimType == ClaimType.FIXED && claimData.fixedAmount == 0)
+                || (claimData.claimType == ClaimType.PERCENTAGE && claimData.percentage == 0)
+        ) {
+            revert ClaimDataInvalid();
+        }
+
+        rules[vaultId] = Rules(types, operators, thresholds, claimData);
 
         emit CreateVault(vaultId);
 
@@ -86,6 +83,9 @@ contract SmartVault is ISmartVault {
 
     function deposit(bytes32 vaultId) external payable {
         Attestation memory attestation = _eas.getAttestation(vaultId);
+        if (attestation.uid != vaultId) {
+            revert VaultNotFound();
+        }
 
         (uint256 depositStart, uint256 depositEnd) = _getDepositTimeFromAttestationData(attestation.data);
         if (block.timestamp < depositStart) {
@@ -95,166 +95,264 @@ contract SmartVault is ISmartVault {
             revert DepositEnded();
         }
 
-        vaultBalances[vaultId] += msg.value;
+        vaultRaised[vaultId] += msg.value;
+        vaultBalance[vaultId] = vaultRaised[vaultId];
+
+        emit Deposit(vaultId, msg.sender, msg.value);
+    }
+
+    // check claimed or not
+    // check revocable or not
+    function claim(bytes32 vaultId, bytes32 attestionUID) external {
+        Attestation memory vaultAttestation = _eas.getAttestation(vaultId);
+        if (vaultAttestation.uid != vaultId) {
+            revert VaultNotFound();
+        }
+
+        (, uint256 depositEnd) = _getDepositTimeFromAttestationData(vaultAttestation.data);
+        if (block.timestamp < depositEnd) {
+            revert DepositNotEnded();
+        }
+
+        Attestation memory validationAttestation = _eas.getAttestation(attestionUID);
+        if (validationAttestation.uid != attestionUID) {
+            revert AttestationNotFound();
+        }
+
+        bytes memory validationData = validationAttestation.data;
+        Rules memory rule = rules[vaultId];
+
+        bytes32 pointer;
+        assembly {
+            validationData := add(validationData, 0x20)
+            pointer := validationData
+        }
+        for (uint256 i = 0; i < rule.types.length; i++) {
+            if (rule.types[i] == Type.BYTES1) {
+                bytes1 value;
+                bytes1 threshold = abi.decode(rule.thresholds[i], (bytes1));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES2) {
+                bytes2 value;
+                bytes2 threshold = abi.decode(rule.thresholds[i], (bytes2));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES4) {
+                bytes4 value;
+                bytes4 threshold = abi.decode(rule.thresholds[i], (bytes4));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES8) {
+                bytes8 value;
+                bytes8 threshold = abi.decode(rule.thresholds[i], (bytes8));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES16) {
+                bytes16 value;
+                bytes16 threshold = abi.decode(rule.thresholds[i], (bytes16));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES32) {
+                bytes32 value;
+                bytes32 threshold = abi.decode(rule.thresholds[i], (bytes32));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT8) {
+                int8 value;
+                int8 threshold = abi.decode(rule.thresholds[i], (int8));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT16) {
+                int16 value;
+                int16 threshold = abi.decode(rule.thresholds[i], (int16));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT32) {
+                int32 value;
+                int32 threshold = abi.decode(rule.thresholds[i], (int32));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT64) {
+                int64 value;
+                int64 threshold = abi.decode(rule.thresholds[i], (int64));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT128) {
+                int128 value;
+                int128 threshold = abi.decode(rule.thresholds[i], (int128));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.INT256) {
+                int256 value;
+                int256 threshold = abi.decode(rule.thresholds[i], (int256));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.ADDRESS) {
+                address value;
+                address threshold = abi.decode(rule.thresholds[i], (address));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkAddress(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BOOL) {
+                bool value;
+                bool threshold = abi.decode(rule.thresholds[i], (bool));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBool(rule.operators[i], value, threshold);
+            } else if (rule.types[i] == Type.BYTES || rule.types[i] == Type.STRING) {
+                bytes memory value;
+                bytes memory threshold = abi.decode(rule.thresholds[i], (bytes));
+                assembly {
+                    let offset := mload(validationData)
+                    value := add(offset, pointer)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes(rule.operators[i], value, threshold);
+            }
+        }
+
+        ClaimData memory claimData = rule.claimData;
+        uint256 claimAmount;
+        if (claimData.claimType == ClaimType.FIXED) {
+            claimAmount = claimData.fixedAmount;
+        } else if (claimData.claimType == ClaimType.PERCENTAGE) {
+            claimAmount = (vaultRaised[vaultId] * claimData.percentage) / (10 ** 18);
+        } else if (claimData.claimType == ClaimType.CUSTOM) {
+            revert("Not support yet");
+        }
+
+        uint256 _vaultBalance = vaultBalance[vaultId];
+        if (_vaultBalance == 0) {
+            revert ClaimedRaisedAmount();
+        }
+
+        if (claimAmount > _vaultBalance) {
+            claimAmount = _vaultBalance;
+        }
+        vaultBalance[vaultId] = _vaultBalance - claimAmount;
+
+        (bool success,) = validationAttestation.recipient.call{ value: claimAmount }("");
+        require(success, "SmartVault: claim failed");
+
+        emit Claim(vaultId, attestionUID, claimAmount);
     }
 
     function getRules(bytes32 vaultId) external view returns (Type[] memory, Operator[] memory, bytes[] memory) {
         return (rules[vaultId].types, rules[vaultId].operators, rules[vaultId].thresholds);
     }
 
-    function claim(bytes32 vaultId, bytes32 attestionUID) external {
-        Attestation memory attestation = _eas.getAttestation(attestionUID);
-        require(attestation.recipient == msg.sender, "SmartVault: not recipient");
-        require(attestation.schema == vaultSchema, "SmartVault: invalid schema");
-        require(attestation.attester == address(this), "SmartVault: invalid attester");
-
-        (, uint256 depositEnd) = _getDepositTimeFromAttestationData(attestation.data);
-        require(block.timestamp > depositEnd, "SmartVault: deposit not ended");
-
-        //     bytes memory attestationDataEncoded = attestation.data;
-        //     Rules memory rule = rules[vaultId];
-        //     require(rule.types.length > 0, "SmartVault: vault not found");
-        //     bytes32 pointer;
-        //     assembly {
-        //         attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip length
-        //         pointer := attestationDataEncoded // save start pointer of data
-        //     }
-        //     for (uint256 i = 0; i < rule.types.length; i++) {
-        //         if (rule.types[i] == Type.UINT) {
-        //             uint256 value;
-        //             assembly {
-        //                 value := mload(attestationDataEncoded) // load value
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //             uint256 threshold = abi.decode(rule.thresholds[i], (uint256));
-        //             _checkUint(rule.operations[i], value, threshold);
-        //         } else if (rule.types[i] == Type.INT) {
-        //             int256 value;
-        //             assembly {
-        //                 value := mload(attestationDataEncoded) // load value
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //             int256 threshold = abi.decode(rule.thresholds[i], (int256));
-        //             _checkInt(rule.operations[i], value, threshold);
-        //         } else if (rule.types[i] == Type.STRING) {
-        //             // TODO: decode value from attestation.data
-        //             string memory value;
-        //             string memory threshold = string(rule.thresholds[i]);
-        //             assembly {
-        //                 let offset := mload(attestationDataEncoded) // load offset of string
-        //                 c := add(offset, pointer) // calculate pointer to string from start of data pointer
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //             _checkString(rule.operations[i], value, threshold);
-        //         } else if (rule.types[i] == Type.BYTES) {
-        //             bytes memory value;
-        //             bytes memory threshold = rule.thresholds[i];
-        //             assembly {
-        //                 let offset := mload(attestationDataEncoded) // load offset of bytes (string and bytes have
-        // the
-        // same
-        //                 // encoding)
-        //                 c := add(offset, pointer) // calculate pointer to string from start of data pointer
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //             _checkBytes(rule.operations[i], value, threshold);
-        //         } else if (rule.types[i] == Type.ADDRESS) {
-        //             bytes memory value;
-        //             bytes memory threshold = rule.thresholds[i];
-        //             assembly {
-        //                 value := mload(attestationDataEncoded) // load value
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //         } else if (rule.types[i] == Type.BOOL) {
-        //             bool value;
-        //             assembly {
-        //                 value := mload(attestationDataEncoded) // load value
-        //                 attestationDataEncoded := add(attestationDataEncoded, 0x20) // skip value
-        //             }
-        //             bytes memory threshold = rule.thresholds[i];
-        //         }
-        //     }
+    function _checkBytes32(Operator operator, bytes32 value, bytes32 threshold) private pure {
+        if (operator == Operator.EQ) {
+            require(value == threshold, "SmartVault: invalid bytes32");
+        } else if (operator == Operator.NEQ) {
+            require(value != threshold, "SmartVault: invalid bytes32");
+        } else if (operator == Operator.LT) {
+            require(value < threshold, "SmartVault: invalid bytes32");
+        } else if (operator == Operator.LTE) {
+            require(value <= threshold, "SmartVault: invalid bytes32");
+        } else if (operator == Operator.GT) {
+            require(value > threshold, "SmartVault: invalid bytes32");
+        } else if (operator == Operator.GTE) {
+            require(value >= threshold, "SmartVault: invalid bytes32");
+        } else if (operator != Operator.NONE) {
+            revert("SmartVault: invalid operation");
+        }
     }
 
-    // function _checkString(Operator operator, string memory value, string memory threshold) private pure {
-    //     if (operator == Operator.EQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator == Operator.NEQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator != Operator.NONE) {
-    //         revert("SmartVault: invalid operation");
-    //     }
-    // }
+    function _checkInt256(Operator operator, int256 value, int256 threshold) private pure {
+        if (operator == Operator.EQ) {
+            require(value == threshold, "SmartVault: invalid int256");
+        } else if (operator == Operator.NEQ) {
+            require(value != threshold, "SmartVault: invalid int256");
+        } else if (operator == Operator.GT) {
+            require(value > threshold, "SmartVault: invalid int256");
+        } else if (operator == Operator.GTE) {
+            require(value >= threshold, "SmartVault: invalid int256");
+        } else if (operator == Operator.LT) {
+            require(value < threshold, "SmartVault: invalid int256");
+        } else if (operator == Operator.LTE) {
+            require(value <= threshold, "SmartVault: invalid int256");
+        } else if (operator != Operator.NONE) {
+            revert("SmartVault: invalid operation");
+        }
+    }
 
-    // function _checkBytes(Operator operator, bytes memory value, bytes memory threshold) private pure {
-    //     if (operator == Operator.EQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator == Operator.NEQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator != Operator.NONE) {
-    //         revert("SmartVault: invalid operation");
-    //     }
-    // }
+    function _checkAddress(Operator operator, address value, address threshold) private pure {
+        if (operator == Operator.EQ) {
+            require(value == threshold, "SmartVault: invalid address");
+        } else if (operator == Operator.NEQ) {
+            require(value != threshold, "SmartVault: invalid address");
+        } else if (operator != Operator.NONE) {
+            revert("SmartVault: invalid operation");
+        }
+    }
 
-    // function _checkBytes(Operator operator, bytes memory value, bytes memory threshold) private pure {
-    //     if (operator == Operator.EQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator == Operator.NEQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator != Operator.NONE) {
-    //         revert("SmartVault: invalid operation");
-    //     }
-    // }
+    function _checkBool(Operator operator, bool value, bool threshold) private pure {
+        if (operator == Operator.EQ) {
+            require(value == threshold, "SmartVault: invalid bool");
+        } else if (operator == Operator.NEQ) {
+            require(value != threshold, "SmartVault: invalid bool");
+        } else if (operator != Operator.NONE) {
+            revert("SmartVault: invalid operation");
+        }
+    }
 
-    // function _checkBytes(Operator operator, bytes memory value, bytes memory threshold) private pure {
-    //     if (operator == Operator.EQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator == Operator.NEQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator != Operator.NONE) {
-    //         revert("SmartVault: invalid operation");
-    //     }
-    // }
-
-    // function _checkBytes(Operator operator, bytes memory value, bytes memory threshold) private pure {
-    //     if (operator == Operator.EQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator == Operator.NEQ) {
-    //         require(
-    //             keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
-    //             "SmartVault: invalid string"
-    //         );
-    //     } else if (operator != Operator.NONE) {
-    //         revert("SmartVault: invalid operation");
-    //     }
-    // }
+    function _checkBytes(Operator operator, bytes memory value, bytes memory threshold) private pure {
+        if (operator == Operator.EQ) {
+            require(
+                keccak256(abi.encodePacked(value)) == keccak256(abi.encodePacked(threshold)),
+                "SmartVault: invalid bytes"
+            );
+        } else if (operator == Operator.NEQ) {
+            require(
+                keccak256(abi.encodePacked(value)) != keccak256(abi.encodePacked(threshold)),
+                "SmartVault: invalid bytes"
+            );
+        } else if (operator != Operator.NONE) {
+            revert("SmartVault: invalid operation");
+        }
+    }
 
     function _getDepositTimeFromAttestationData(bytes memory data)
         private

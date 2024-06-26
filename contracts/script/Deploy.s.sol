@@ -7,7 +7,9 @@ import { SmartVault } from "src/SmartVault.sol";
 
 contract DeploySmartVault is BaseScript {
     function run() public broadcast returns (SmartVault) {
-        bytes32 vaultSchema = 0x3a22bd7490f794015b5bfd49f562dc89b13a26a1b589fa2fb65c303bb2980a42;
+        bytes32 vaultSchema = vm.envOr({ name: "VAULT_SCHEMA", defaultValue: bytes32(0) });
+        require(vaultSchema != bytes32(0), "VAULT_SCHEMA is required");
+
         SmartVault smartVault = new SmartVault(vaultSchema);
         return smartVault;
     }

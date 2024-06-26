@@ -60,11 +60,32 @@ library Parser {
     }
 
     function _bytesToType(bytes memory b) private pure returns (Type) {
-        if (keccak256(b) == keccak256("uint256")) {
-            return Type.UINT256;
-        } else if (keccak256(b) == keccak256("int256")) {
+        if (keccak256(b) == keccak256("int8")) {
+            return Type.INT8;
+        } else if (keccak256(b) == keccak256("int16")) {
+            return Type.INT16;
+        } else if (keccak256(b) == keccak256("int32")) {
+            return Type.INT32;
+        } else if (keccak256(b) == keccak256("int64")) {
+            return Type.INT64;
+        } else if (keccak256(b) == keccak256("int128")) {
+            return Type.INT128;
+        } else if (keccak256(b) == keccak256("int256") || keccak256(b) == keccak256("int")) {
             return Type.INT256;
-        } else if (keccak256(b) == keccak256("bytes32")) {
+        } else if (keccak256(b) == keccak256("bytes1") || keccak256(b) == keccak256("uint8")) {
+            return Type.BYTES1;
+        } else if (keccak256(b) == keccak256("bytes2") || keccak256(b) == keccak256("uint16")) {
+            return Type.BYTES2;
+        } else if (keccak256(b) == keccak256("bytes4") || keccak256(b) == keccak256("uint32")) {
+            return Type.BYTES4;
+        } else if (keccak256(b) == keccak256("bytes8") || keccak256(b) == keccak256("uint64")) {
+            return Type.BYTES8;
+        } else if (keccak256(b) == keccak256("bytes16") || keccak256(b) == keccak256("uint128")) {
+            return Type.BYTES16;
+        } else if (
+            keccak256(b) == keccak256("bytes32") || keccak256(b) == keccak256("uint256")
+                || keccak256(b) == keccak256("uint")
+        ) {
             return Type.BYTES32;
         } else if (keccak256(b) == keccak256("address")) {
             return Type.ADDRESS;
@@ -75,6 +96,7 @@ library Parser {
         } else if (keccak256(b) == keccak256("string")) {
             return Type.STRING;
         }
+
         revert UnsupportedType();
     }
 }

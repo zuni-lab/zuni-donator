@@ -12,11 +12,33 @@ enum Operator {
 }
 
 enum Type {
-    UINT256,
+    INT8,
+    INT16,
+    INT32,
+    INT64,
+    INT128,
     INT256,
+    BYTES1,
+    BYTES2,
+    BYTES4,
+    BYTES8,
+    BYTES16,
     BYTES32,
     BYTES,
     ADDRESS,
     BOOL,
     STRING
+}
+
+enum ClaimType {
+    FIXED,
+    PERCENTAGE,
+    CUSTOM
+}
+
+struct ClaimData {
+    ClaimType claimType;
+    uint256 fixedAmount;
+    uint256 percentage;
+    bytes customData;
 }
