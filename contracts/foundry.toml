@@ -14,7 +14,6 @@ script = "script"
 solc = "0.8.26"
 src = "src"
 test = "test"
-libs = ["node_modules", "lib"]
 ffi = true
 ast = true
 build_info = true
