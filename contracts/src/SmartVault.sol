@@ -53,24 +53,25 @@ contract SmartVault is ISmartVault {
             revert ContributeTimeInvalid();
         }
 
-        bytes memory input = abi.encode(name, description, contributeStart, contributeEnd, validationSchema);
-
-        AttestationRequestData memory data = AttestationRequestData({
-            recipient: msg.sender,
-            expirationTime: NO_EXPIRATION_TIME,
-            revocable: false,
-            refUID: EMPTY_UID,
-            data: input,
-            value: 0
-        });
-
-        bytes32 vaultId = _eas.attest(AttestationRequest({ schema: vaultSchema, data: data }));
-
         string memory schema = _schemaRegistry.getSchema(validationSchema).schema;
         Type[] memory types = schema.extractTypes();
 
+        // validate rules
         if (types.length != operators.length || types.length != thresholds.length) {
             revert RulesLengthMismatch();
+        }
+
+        for (uint256 i = 0; i < types.length; i++) {
+            if (types[i] == Type.UNSUPPORTED) {
+                require(operators[i] == Operator.NONE, "SmartVault: can not compare unsupported type");
+            } else if (
+                types[i] == Type.ADDRESS || types[i] == Type.BOOL || types[i] == Type.BYTES || types[i] == Type.STRING
+            ) {
+                require(
+                    operators[i] == Operator.EQ || operators[i] == Operator.NEQ || operators[i] == Operator.NONE,
+                    "SmartVault: invalid operation"
+                );
+            }
         }
 
         if (
@@ -79,6 +80,18 @@ contract SmartVault is ISmartVault {
         ) {
             revert ClaimDataInvalid();
         }
+
+        AttestationRequestData memory data = AttestationRequestData({
+            recipient: msg.sender,
+            expirationTime: NO_EXPIRATION_TIME,
+            revocable: false,
+            refUID: EMPTY_UID,
+            data: abi.encode(
+                name, description, contributeStart, contributeEnd, validationSchema, operators, thresholds, claimData
+            ),
+            value: 0
+        });
+        bytes32 vaultId = _eas.attest(AttestationRequest({ schema: vaultSchema, data: data }));
 
         _rules[vaultId] = Rules(types, operators, thresholds, claimData);
 
@@ -94,7 +107,7 @@ contract SmartVault is ISmartVault {
             revert VaultNotFound();
         }
 
-        (uint256 contributeStart, uint256 contributeEnd) = _getcontributeTimeFromAttestationData(attestation.data);
+        (uint256 contributeStart, uint256 contributeEnd) = _getContributeTimeFromAttestation(attestation.data);
         if (block.timestamp < contributeStart) {
             revert ContributeNotStarted();
         }
@@ -129,7 +142,7 @@ contract SmartVault is ISmartVault {
             revert VaultNotFound();
         }
 
-        (, uint256 contributeEnd) = _getcontributeTimeFromAttestationData(vaultAttestation.data);
+        (, uint256 contributeEnd) = _getContributeTimeFromAttestation(vaultAttestation.data);
         if (block.timestamp < contributeEnd) {
             revert ClaimNotStarted();
         }
@@ -420,7 +433,7 @@ contract SmartVault is ISmartVault {
         }
     }
 
-    function _getcontributeTimeFromAttestationData(bytes memory data)
+    function _getContributeTimeFromAttestation(bytes memory data)
         private
         pure
         returns (uint256 contributeStart, uint256 contributeEnd)
