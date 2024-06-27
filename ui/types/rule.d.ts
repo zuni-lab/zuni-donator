@@ -23,12 +23,19 @@ type TDeclareStmt = {
   name: string;
 };
 
-type TRule = {
+type TSupportedRule = {
   type: TRuleType;
   name: string;
   ops: TOperator[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue?: any;
 };
+
+type TUnsupportedRule = {
+  type: string;
+  typeOfRule: 'unsupported';
+  name: string;
+  ops: TOperator[];
+};
+
+type TRule = TSupportedRule | TUnsupportedRule;
 
 type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';

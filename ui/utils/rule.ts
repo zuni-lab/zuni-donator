@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isValidAddress, isValidBytes, isValidBytesWithLength } from './tools';
+import { isValidAddress, isValidBytesWithLength } from './tools';
 
 export const RuleOperators: {
   [key in TOperator]: [number, string];
@@ -66,6 +66,21 @@ export const isNumericType = (type: TRuleType): boolean => {
   }
 };
 
+export const isBytesType = (type: TRuleType): boolean => {
+  switch (type) {
+    case 'bytes1':
+    case 'bytes2':
+    case 'bytes4':
+    case 'bytes8':
+    case 'bytes16':
+    case 'bytes32':
+    case 'bytes':
+      return true;
+    default:
+      return false;
+  }
+};
+
 export const MIN_VAULES_OF_NUMERIC_TYPES: Record<TRuleNumericType, number> = {
   int8: -128,
   int16: -(2 ** 15),
@@ -108,102 +123,200 @@ export const getMaxValue = (type: TRuleType): number => {
   return MAX_VAULES_OF_NUMERIC_TYPES[type as TRuleNumericType];
 };
 
-export const isNumericValue = (type: TRuleType, msg?: string) =>
-  z.string().refine(
-    (val) => {
-      if (isNumericType(type)) {
-        const num = parseInt(val, 10);
-        if (isNaN(num)) {
-          return false;
-        }
-        return num >= getMinValue(type) && num <= getMaxValue(type);
-      }
-      return false;
-    },
-    {
-      message:
-        msg || `Must be a valid integer, between ${getMinValue(type)} and ${getMaxValue(type)}`,
-    }
-  );
+export const isNBytesValue = (type: TRuleType, val: string): boolean => {
+  let num = 0;
+  switch (type) {
+    case 'bytes1':
+      num = 1;
+      break;
+    case 'bytes2':
+      num = 2;
+      break;
+    case 'bytes4':
+      num = 4;
+      break;
+    case 'bytes8':
+      num = 8;
+      break;
+    case 'bytes16':
+      num = 16;
+      break;
+    case 'bytes32':
+      num = 32;
+      break;
+    default:
+      break;
+  }
+  return isValidBytesWithLength(val, num);
+};
 
-export const isNBytesValue = (type: TRuleBytesType) =>
-  z.string().refine(
-    (val) => {
-      let num = 0;
-      switch (type) {
-        case 'bytes1':
-          num = 1;
-          break;
-        case 'bytes2':
-          num = 2;
-          break;
-        case 'bytes4':
-          num = 4;
-          break;
-        case 'bytes8':
-          num = 8;
-          break;
-        case 'bytes16':
-          num = 16;
-          break;
-        case 'bytes32':
-          num = 32;
-          break;
-        default:
-          break;
-      }
-      return isValidBytesWithLength(val, num);
-    },
-    {
-      message: `Must be a valid ${type} string`,
-    }
-  );
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// export const RuleSchema: Record<TRuleType, any> = {
+//   int8: isNumericValue('int8'),
+//   int16: isNumericValue('int16'),
+//   int24: isNumericValue('int24'),
+//   int32: isNumericValue('int32'),
+//   int64: isNumericValue('int64'),
+//   int128: isNumericValue('int128'),
+//   int256: isNumericValue('int256'),
+//   uint8: isNumericValue('uint8'),
+//   uint16: isNumericValue('uint16'),
+//   uint24: isNumericValue('uint24'),
+//   uint32: isNumericValue('uint32'),
+//   uint64: isNumericValue('uint64'),
+//   uint128: isNumericValue('uint128'),
+//   uint256: isNumericValue('uint256'),
+//   bytes1: isNBytesValue('bytes1'),
+//   bytes2: isNBytesValue('bytes2'),
+//   bytes4: isNBytesValue('bytes4'),
+//   bytes8: isNBytesValue('bytes8'),
+//   bytes16: isNBytesValue('bytes16'),
+//   bytes32: isNBytesValue('bytes32'),
+//   bytes: z
+//     .string()
+//     .transform((val) => val.trim())
+//     .refine((val) => isValidBytes(val), {
+//       message: 'Must be a valid bytes string',
+//     })
+//     .optional(),
+//   address: z
+//     .string()
+//     .transform((val) => val.trim())
+//     .refine((val) => isValidAddress(val), {
+//       message: 'Must be a valid address',
+//     }),
+//   bool: z
+//     .string()
+//     .transform((val) => val.trim())
+//     .refine((val) => val === 'true' || val === 'false', {
+//       message: 'Must be a valid boolean',
+//     }),
+//   string: z
+//     .string()
+//     .transform((val) => val.trim())
+//     .optional(),
+// };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const RuleSchema: Record<TRuleType, any> = {
-  int8: isNumericValue('int8'),
-  int16: isNumericValue('int16'),
-  int24: isNumericValue('int24'),
-  int32: isNumericValue('int32'),
-  int64: isNumericValue('int64'),
-  int128: isNumericValue('int128'),
-  int256: isNumericValue('int256'),
-  uint8: isNumericValue('uint8'),
-  uint16: isNumericValue('uint16'),
-  uint24: isNumericValue('uint24'),
-  uint32: isNumericValue('uint32'),
-  uint64: isNumericValue('uint64'),
-  uint128: isNumericValue('uint128'),
-  uint256: isNumericValue('uint256'),
-  bytes1: isNBytesValue('bytes1'),
-  bytes2: isNBytesValue('bytes2'),
-  bytes4: isNBytesValue('bytes4'),
-  bytes8: isNBytesValue('bytes8'),
-  bytes16: isNBytesValue('bytes16'),
-  bytes32: isNBytesValue('bytes32'),
+  int8: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int16: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int24: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int32: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int64: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int128: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  int256: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint8: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint16: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint24: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint32: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint64: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint128: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  uint256: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes1: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes2: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes4: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes8: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes16: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  bytes32: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
   bytes: z
     .string()
     .transform((val) => val.trim())
-    .refine((val) => isValidBytes(val), {
-      message: 'Must be a valid bytes string',
-    })
     .optional(),
   address: z
     .string()
     .transform((val) => val.trim())
-    .refine((val) => isValidAddress(val), {
-      message: 'Must be a valid address',
-    }),
+    .optional(),
   bool: z
     .string()
     .transform((val) => val.trim())
-    .refine((val) => val === 'true' || val === 'false', {
-      message: 'Must be a valid boolean',
-    }),
+    .optional(),
   string: z
     .string()
     .transform((val) => val.trim())
     .optional(),
+} as const;
+
+export const validateField = (type: TRuleType, value: string): [boolean, string] => {
+  if (isNumericType(type)) {
+    const num = parseInt(value, 10);
+    if (isNaN(num)) {
+      return [false, 'Must be a valid number'];
+    }
+    const min = getMinValue(type);
+    const max = getMaxValue(type);
+    const result = num >= min && num <= max;
+    return [result, result ? '' : `Must be a number between ${min} and ${max}`];
+  } else if (isBytesType(type)) {
+    return [isNBytesValue(type, value), 'Must be a valid bytes string'];
+  } else if (type === 'address') {
+    return [isValidAddress(value), 'Must be a valid address'];
+  } else if (type === 'bool') {
+    return [value === 'true' || value === 'false', 'Must be a valid boolean'];
+  } else {
+    // string is always valid
+  }
+  return [true, ''];
 };
 
 export const isValidRuleType = (
@@ -251,24 +364,40 @@ export const parseValidationSchema = (schema: string): TRule[] => {
     const { isValid, value } = isValidRuleType(type);
     if (isValid) {
       const ops = getValidOperators(value);
-      let defaultValue;
-      if (isNumericType(value)) {
-        defaultValue = 0;
-      } else {
-        defaultValue = '';
-      }
-      result.push({ type: value, name, ops, defaultValue });
+      result.push({ type: value, name, ops });
     } else {
-      console.error(`Invalid type: ${type}`);
+      result.push({
+        type,
+        typeOfRule: 'unsupported',
+        name,
+        ops: ['NONE'],
+      });
     }
   });
   return result;
 };
 
+export const isUnsupportedRule = (rule: TRule): rule is TUnsupportedRule => {
+  return (rule as TUnsupportedRule).typeOfRule === 'unsupported';
+};
+
+// type TRule = TSupportedRule | TUnsupportedRule;
 export const getValidationSchema = (rules: TRule[]) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fields: Record<string, any> = {};
   rules.forEach((rule) => {
+    // check if rule is supported
+    if (isUnsupportedRule(rule)) {
+      fields[rule.name] = z.string().default('');
+      fields[`${rule.name}_op`] = z
+        .string()
+        .refine((val) => val === 'NONE', {
+          message: 'Invalid operator for this field',
+        })
+        .default('NONE');
+      return;
+    }
+
     fields[rule.name] = RuleSchema[rule.type];
     fields[`${rule.name}_op`] = z.string().refine(
       (val) => {
