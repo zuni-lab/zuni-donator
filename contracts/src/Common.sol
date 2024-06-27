@@ -29,7 +29,8 @@ enum Type {
     BYTES,
     ADDRESS,
     BOOL,
-    STRING
+    STRING,
+    UNSUPPORTED
 }
 
 enum ClaimType {

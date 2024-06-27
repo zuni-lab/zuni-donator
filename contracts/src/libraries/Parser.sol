@@ -10,9 +10,6 @@ library Parser {
     /// @notice Thrown when type list is empty
     error EmptyTypeList();
 
-    /// @notice Thrown when type is not supported
-    error UnsupportedType();
-
     function extractTypes(string memory self) public pure returns (Type[] memory) {
         return extractTypes(bytes(self));
     }
@@ -99,8 +96,8 @@ library Parser {
             return Type.BYTES;
         } else if (keccak256(b) == keccak256("string")) {
             return Type.STRING;
+        } else {
+            return Type.UNSUPPORTED;
         }
-
-        revert UnsupportedType();
     }
 }
