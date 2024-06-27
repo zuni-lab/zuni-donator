@@ -293,6 +293,8 @@ contract SmartVault is ISmartVault {
                     validationData := add(validationData, 0x20)
                 }
                 _checkBytes(rule.operators[i], value, threshold);
+            } else {
+                require(rule.operators[i] == Operator.NONE, "SmartVault: can not compare unsupported type");
             }
         }
 
