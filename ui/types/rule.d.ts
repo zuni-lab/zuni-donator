@@ -31,5 +31,4 @@ type TRule = {
   defaultValue?: any;
 };
 
-
 type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';

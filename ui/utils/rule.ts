@@ -104,7 +104,7 @@ export const getMaxValue = (type: TRuleType): number => {
   return MAX_VAULES_OF_NUMERIC_TYPES[type as TRuleNumericType];
 };
 
-export const isNumericValue = (type: TRuleType) =>
+export const isNumericValue = (type: TRuleType, msg?: string) =>
   z.string().refine(
     (val) => {
       if (isNumericType(type)) {
@@ -117,7 +117,8 @@ export const isNumericValue = (type: TRuleType) =>
       return false;
     },
     {
-      message: `Must be a valid integer, between ${getMinValue(type)} and ${getMaxValue(type)}`,
+      message:
+        msg || `Must be a valid integer, between ${getMinValue(type)} and ${getMaxValue(type)}`,
     }
   );
 
@@ -188,8 +189,7 @@ export const RuleSchema: Record<TRuleType, any> = {
     .transform((val) => val.trim())
     .refine((val) => isValidAddress(val), {
       message: 'Must be a valid address',
-    })
-    .optional(),
+    }),
   bool: z
     .string()
     .transform((val) => val.trim())
