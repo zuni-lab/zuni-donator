@@ -6,7 +6,7 @@ const ProjectENVSchema = z.object({
    * Feature flags, comma separated
    */
   NEXT_PUBLIC_COINBASE_API_KEY: z.string().min(10),
-  NEXT_PUBLIC_SMART_VAULT_ADDRESS: z.string().min(32),
+  NEXT_PUBLIC_SMART_VAULT_ADDRESS: z.string().length(42),
   NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS: z
     .string()
     .min(42)

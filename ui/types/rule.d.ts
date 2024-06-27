@@ -30,3 +30,6 @@ type TRule = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValue?: any;
 };
+
+
+type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';

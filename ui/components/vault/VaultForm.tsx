@@ -3,7 +3,10 @@
 import { Button } from '@/shadcn/Button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shadcn/Form';
 import { Input } from '@/shadcn/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shadcn/Select';
 
+import { BLACK_LIST_SCHEMA } from '@/constants/schema';
+import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useActionDebounce } from '@/hooks/useAction';
 import { useSchemaStore } from '@/states/schema';
 import {
@@ -12,14 +15,15 @@ import {
   isNumericType,
   parseValidationSchema,
 } from '@/utils/rule';
+import { isValidBytesWithLength } from '@/utils/tools';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader, ShieldBan, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useWriteContract } from 'wagmi';
 import { z } from 'zod';
 import { TooltipWrapper } from '../TooltipWrapper';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../shadcn/Select';
-import { isValidBytesWithLength } from '@/utils/tools';
+import { ProjectENV } from '@env';
 
 const now = new Date().getTime(); // Current time in milliseconds
 const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
@@ -68,6 +72,7 @@ export const VaultForm: IComponent = () => {
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const { data: hash, writeContract } = useWriteContract();
 
   const combinedSchema = baseFormSchema.extend(dynamicSchema.shape).refine(
     (data) => {
@@ -112,38 +117,14 @@ export const VaultForm: IComponent = () => {
     setDynamicSchema(z.object({}));
   }, [form, setParsedRules, setDynamicSchema]);
 
-  useEffect(() => {
-    if (!registry) {
-      return;
-    }
-    debounce(async () => {
-      setLoading(true);
-      if (!isValidBytesWithLength(watchValidationSchema, 32)) {
-        reset();
-        setLoading(false);
-        return;
-      }
-      try {
-        const schemaRecord = await registry?.getSchema({ uid: watchValidationSchema });
-        if (!schemaRecord) {
-          reset();
-        }
-
-        const rules = parseValidationSchema(schemaRecord.schema);
-        setParsedRules(rules);
-        setDynamicSchema(getValidationSchema(rules));
-      } catch (error) {
-        reset();
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchValidationSchema, registry, reset]);
-
   const handlePressSubmit = handleSubmit((values) => {
-    console.log('values: ', values);
+    console.log(values);
+    // writeContract({
+    //   address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
+    //   abi: SMART_VAULT_ABI,
+    //   functionName: 'createVault',
+    //   args: [],
+    // });
   });
 
   const renderSchemaStatus = useMemo(() => {
@@ -164,6 +145,44 @@ export const VaultForm: IComponent = () => {
       </TooltipWrapper>
     );
   }, [parsedRules, loading]);
+
+  useEffect(() => {
+    if (!registry) {
+      return;
+    }
+    debounce(async () => {
+      setLoading(true);
+      if (!isValidBytesWithLength(watchValidationSchema, 32)) {
+        reset();
+        setLoading(false);
+        return;
+      }
+      try {
+        const schemaRecord = await registry?.getSchema({ uid: watchValidationSchema });
+        if (!schemaRecord) {
+          reset();
+          setLoading(false);
+          return;
+        }
+
+        if (BLACK_LIST_SCHEMA.includes(schemaRecord.schema)) {
+          reset();
+          setLoading(false);
+          return;
+        }
+
+        const rules = parseValidationSchema(schemaRecord.schema);
+        setParsedRules(rules);
+        setDynamicSchema(getValidationSchema(rules));
+      } catch (error) {
+        reset();
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchValidationSchema, registry, reset]);
 
   return (
     <Form {...form}>
@@ -202,42 +221,44 @@ export const VaultForm: IComponent = () => {
             </FormItem>
           )}
         />
-        <FormField
-          control={control}
-          name="depositStart"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Deposit start (UTC)</FormLabel>
-              <FormControl>
-                <Input
-                  type="datetime-local"
-                  placeholder="The start of the deposit period"
-                  className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="depositEnd"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Deposit end (UTC)</FormLabel>
-              <FormControl>
-                <Input
-                  type="datetime-local"
-                  placeholder="The end of the deposit period"
-                  {...field}
-                  className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <FormField
+            control={control}
+            name="depositStart"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Deposit start (UTC)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    placeholder="The start of the deposit period"
+                    className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="depositEnd"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Deposit end (UTC)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    placeholder="The end of the deposit period"
+                    {...field}
+                    className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={control}
           name="validationSchema"

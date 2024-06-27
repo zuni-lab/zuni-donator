@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { isValidAddress, isValidBytes, isValidBytesWithLength } from './tools';
 
-type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';
-
 export const RuleOperators: {
   [key in TOperator]: [number, string];
 } = {
@@ -237,6 +235,7 @@ export const getValidOperators = (type: TRuleType): TOperator[] => {
 };
 
 export const parseValidationSchema = (schema: string): TRule[] => {
+  schema = schema.replace(/"/g, '');
   const lit = schema.split(',');
   if (lit.length == 0) {
     return [];
@@ -269,7 +268,7 @@ export const getValidationSchema = (rules: TRule[]) => {
     fields[rule.name] = RuleSchema[rule.type];
     fields[`${rule.name}_op`] = z.string().refine(
       (val) => {
-        return rule.ops.includes(val);
+        return rule.ops.includes(val as TOperator);
       },
       {
         message: 'Invalid operator for this field',
