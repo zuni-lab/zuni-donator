@@ -1,7 +1,8 @@
 type TClaimType = 'FIXED' | 'PERCENTAGE';
 
 type TClaimData = {
-  type: TClaimType;
-  fixedAmount?: number;
-  percentage?: number;
+  claimType: number;
+  fixedAmount: bigint;
+  percentage: bigint;
+  customData: `0x${string}`;
 };

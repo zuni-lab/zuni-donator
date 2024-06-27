@@ -23,7 +23,7 @@ export const VaultDialog: IComponent = () => {
           Create vault
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-white">
+      <DialogContent className="bg-white max-w-[33rem]">
         {!address && (
           <>
             <DialogHeader>

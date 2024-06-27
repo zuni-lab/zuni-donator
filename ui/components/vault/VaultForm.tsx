@@ -5,30 +5,33 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shadcn/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shadcn/Select';
 
-import { BLACK_LIST_SCHEMA } from '@/constants/schema';
 import { SMART_VAULT_ABI } from '@/constants/abi';
+import { BLACK_LIST_SCHEMA } from '@/constants/schema';
 import { useActionDebounce } from '@/hooks/useAction';
 import { useSchemaStore } from '@/states/schema';
+import { ClaimType, isValidType } from '@/utils/claim';
 import {
   getMaxValue,
-  getMinValue,
   getOperatorLabel,
+  getOperatorNumber,
   getValidationSchema,
   isNumericType,
-  isNumericValue,
   parseValidationSchema,
 } from '@/utils/rule';
-import { isValidBytesWithLength, isValidFloat } from '@/utils/tools';
+import { isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
+import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { cx } from 'class-variance-authority';
 import { Loader, ShieldBan, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useWriteContract } from 'wagmi';
-import { isValid, z } from 'zod';
+import { encodeAbiParameters } from 'viem';
+import { useWaitForTransactionReceipt, useWriteContract, type BaseError } from 'wagmi';
+import { baseSepolia } from 'wagmi/chains';
+
+import { z } from 'zod';
 import { TooltipWrapper } from '../TooltipWrapper';
-import { ProjectENV } from '@env';
-import { ClaimType, isValidType } from '@/utils/claim';
-import { cx } from 'class-variance-authority';
 
 const now = new Date().getTime(); // Current time in milliseconds
 const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
@@ -80,7 +83,7 @@ export const VaultForm: IComponent = () => {
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const { data: hash, writeContract } = useWriteContract();
+  const { data: hash, isPending, writeContract, error } = useWriteContract();
 
   const combinedSchema = baseFormSchema
     .extend(dynamicSchema.shape)
@@ -196,13 +199,90 @@ export const VaultForm: IComponent = () => {
   }, [watchValidationSchema, registry, reset]);
 
   const handlePressSubmit = handleSubmit((values) => {
-    console.log(values);
-    // writeContract({
-    //   address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
-    //   abi: SMART_VAULT_ABI,
-    //   functionName: 'createVault',
-    //   args: [],
-    // });
+    if (parsedRules.length === 0) {
+      form.setError('validationSchema', { message: 'The validation schema is invalid' });
+      return;
+    }
+
+    const ops: number[] = [];
+    const thresholds: `0x${string}`[] = [];
+
+    parsedRules.forEach((rule) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opKey = (values as any)[`${rule.name}_op` as any];
+      if (!opKey) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.setError(`${rule.name}_op` as any, { message: 'Operator is required' });
+        return;
+      }
+
+      const op = getOperatorNumber(opKey);
+      if (op === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.setError(`${rule.name}_op` as any, { message: 'Invalid operator' });
+        return;
+      }
+      ops.push(op);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const value = (values as any)[rule.name as any];
+      const encodedData = encodeAbiParameters([{ type: rule.type }], [value]);
+      thresholds.push(encodedData);
+    });
+
+    if (ops.length === 0 || thresholds.length === 0) {
+      form.setError('validationSchema', { message: 'Invalid schema' });
+      return;
+    }
+
+    if (ops.length !== thresholds.length) {
+      form.setError('validationSchema', { message: 'Invalid schema' });
+      return;
+    }
+
+    if (!isValidType(values.claimType)) {
+      form.setError('claimType', { message: 'Claim type is required' });
+      return;
+    }
+
+    let claimData: TClaimData = {} as TClaimData;
+    if (values.claimType === 'FIXED') {
+      claimData = {
+        claimType: ClaimType.FIXED,
+        fixedAmount: BigInt(parseFloat(values.claimAmount) * 1e18),
+        percentage: BigInt(0),
+        customData: '0x' as `0x${string}`,
+      };
+    } else if (values.claimType === 'PERCENTAGE') {
+      claimData = {
+        claimType: ClaimType.PERCENTAGE,
+        fixedAmount: BigInt(0),
+        percentage: BigInt(parseFloat(values.claimPercentage) * 1e18),
+        customData: '0x' as `0x${string}`,
+      };
+    }
+
+    writeContract({
+      address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
+      abi: SMART_VAULT_ABI,
+      functionName: 'createVault',
+      args: [
+        values.name,
+        values.description,
+        BigInt(toUtcTime(new Date(values.depositStart)).getTime()),
+        BigInt(toUtcTime(new Date(values.depositEnd)).getTime()),
+        values.validationSchema as `0x${string}`,
+        ops,
+        thresholds,
+        claimData,
+      ],
+    });
+    debounce(() => {
+      reset();
+    });
+  });
+
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash,
   });
 
   const renderSchemaStatus = useMemo(() => {
@@ -411,7 +491,7 @@ export const VaultForm: IComponent = () => {
           })}
       </div>
     );
-  }, [control, watchClaimType]);
+  }, [control, watchClaimType, renderInputField]);
 
   return (
     <Form {...form}>
@@ -470,11 +550,35 @@ export const VaultForm: IComponent = () => {
             </div>
           </>
         )}
-        <div className="flex items-center justify-center !my-4">
-          <Button type="submit" className="px-4">
-            Submit
+        <div className="flex items-center justify-center !mt-4">
+          <Button type="submit" className="px-4" disabled={isPending || isConfirming}>
+            {isPending || isConfirming ? (
+              <Loader className="w-4 h-4 text-background animate-spin" />
+            ) : (
+              'Submit'
+            )}
           </Button>
         </div>
+        {error && (
+          <div className="text-destructive">
+            Error: {(error as BaseError).shortMessage || error.message}
+          </div>
+        )}
+        {hash && (
+          <div className="text-gray-700 text-sm flex flex-col">
+            Transaction ID:
+            <Link
+              href={`${baseSepolia.blockExplorers.default.url}/tx/${hash}`}
+              passHref
+              legacyBehavior>
+              <a target="_blank" className="text-blue-600 underline text-xs">
+                {hash}
+              </a>
+            </Link>
+          </div>
+        )}
+        {/* {isConfirming && <div>Waiting for confirmation...</div>} */}
+        {/* {isConfirmed && <div>Transaction confirmed.</div>} */}
       </form>
     </Form>
   );

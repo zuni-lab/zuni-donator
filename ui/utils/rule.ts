@@ -13,6 +13,10 @@ export const RuleOperators: {
   NONE: [6, 'None'],
 } as const;
 
+export const getOperatorNumber = (op: string): number | undefined => {
+  return RuleOperators[op as TOperator]?.[0];
+};
+
 export const RuleTypes: Record<TRuleType, string> = {
   int8: 'int8',
   int16: 'int16',
