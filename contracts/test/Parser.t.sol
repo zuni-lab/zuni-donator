@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Type } from "../Common.sol";
+import { Type } from "src/Common.sol";
 
 library Parser {
     bytes1 private constant COMMA = ",";

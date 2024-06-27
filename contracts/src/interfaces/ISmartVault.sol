@@ -57,7 +57,7 @@ interface ISmartVault {
     /// @param contributionAttestation The attestation received for the contribution
     /// @param amount The amount contributed
     event Contribute(
-        bytes32 indexed vaultId, address indexed contributor, bytes32 contributionAttestation, uint256 amount
+        bytes32 indexed vaultId, address indexed contributor, bytes32 indexed contributionAttestation, uint256 amount
     );
 
     /// @dev Emitted when a claim is made
@@ -65,7 +65,9 @@ interface ISmartVault {
     /// @param validatedAttestion The attestion UID used to validate the claim
     /// @param claimAttestation The attestion received for the claim success
     /// @param amount The amount claimed
-    event Claim(bytes32 indexed vaultId, bytes32 indexed validatedAttestion, bytes32 claimAttestation, uint256 amount);
+    event Claim(
+        bytes32 indexed vaultId, bytes32 indexed validatedAttestion, bytes32 indexed claimAttestation, uint256 amount
+    );
 
     /// @notice Create a new vault
     function createVault(

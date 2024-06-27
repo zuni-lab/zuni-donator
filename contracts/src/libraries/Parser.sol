@@ -64,6 +64,8 @@ library Parser {
             return Type.INT8;
         } else if (keccak256(b) == keccak256("int16")) {
             return Type.INT16;
+        } else if (keccak256(b) == keccak256("int24")) {
+            return Type.INT24;
         } else if (keccak256(b) == keccak256("int32")) {
             return Type.INT32;
         } else if (keccak256(b) == keccak256("int64")) {
@@ -76,6 +78,8 @@ library Parser {
             return Type.BYTES1;
         } else if (keccak256(b) == keccak256("bytes2") || keccak256(b) == keccak256("uint16")) {
             return Type.BYTES2;
+        } else if (keccak256(b) == keccak256("bytes3") || keccak256(b) == keccak256("uint24")) {
+            return Type.BYTES3;
         } else if (keccak256(b) == keccak256("bytes4") || keccak256(b) == keccak256("uint32")) {
             return Type.BYTES4;
         } else if (keccak256(b) == keccak256("bytes8") || keccak256(b) == keccak256("uint64")) {
