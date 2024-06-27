@@ -8,8 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/Card';
-import { getFormattedTimeAndDate } from '@/utils/datetime';
-import { formatWalletAddress } from '@/utils/hex';
+import { getFormattedTimeAndDate, formatWalletAddress } from '@/utils/tools';
 import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { CopyToClipboard } from '../CopyToClipboard';

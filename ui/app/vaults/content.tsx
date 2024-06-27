@@ -3,6 +3,7 @@
 import { Button } from '@/components/shadcn/Button';
 import { Input } from '@/components/shadcn/Input';
 import { VaultCard } from '@/components/vault/VaultCard';
+import { VaultDialog } from '@/components/vault/VaultDialog';
 import { useActionDebounce } from '@/hooks/useAction';
 import { Inbox, LoaderCircle, SearchIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -17,8 +18,8 @@ export const PageContent: IComponent<{
 
   const onSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setLoading(true);
       debounce(() => {
+        setLoading(true);
         if (e.target.value.length === 0) {
           setSelectedVaults(data);
           setLoading(false);
@@ -55,8 +56,8 @@ export const PageContent: IComponent<{
     );
   }, [selectedVaults]);
 
-  return (
-    <section className="mt-6">
+  const renderSearch = useMemo(() => {
+    return (
       <div className="w-[500px] flex items-center float-end bg-background px-2 rounded-md border">
         <Input
           placeholder="Search by Name / UUID of vaults"
@@ -70,6 +71,15 @@ export const PageContent: IComponent<{
             <SearchIcon className="w-6 h-6" />
           )}
         </Button>
+      </div>
+    );
+  }, [loading, onSearch]);
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between">
+        <VaultDialog />
+        {renderSearch}
       </div>
       <div className="w-full flex flex-col items-center justify-center">{renderVaults}</div>
     </section>

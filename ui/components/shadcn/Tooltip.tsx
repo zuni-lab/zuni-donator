@@ -7,6 +7,8 @@ import { cn } from '@/utils/shadcn';
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
+TooltipProvider.displayName = 'Tooltip';
+
 const Tooltip = TooltipPrimitive.Root;
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
