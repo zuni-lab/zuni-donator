@@ -41,3 +41,8 @@ export const isValidBytesWithLength = (val: string, length: number) => {
 export const isValidAddress = (val: string) => {
   return isValidBytesWithLength(val, 20);
 };
+
+const FLOAT_REGEX = /^[+-]?([0-9]*[.])?[0-9]+$/;
+export const isValidFloat = (val: string) => {
+  return FLOAT_REGEX.test(val);
+};

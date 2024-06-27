@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { isValidAddress, isValidBytes, isValidBytesWithLength } from './tools';
 
-type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';
-
 export const RuleOperators: {
   [key in TOperator]: [number, string];
 } = {
@@ -14,6 +12,10 @@ export const RuleOperators: {
   LE: [5, 'Less Than or Equal'],
   NONE: [6, 'None'],
 } as const;
+
+export const getOperatorNumber = (op: string): number | undefined => {
+  return RuleOperators[op as TOperator]?.[0];
+};
 
 export const RuleTypes: Record<TRuleType, string> = {
   int8: 'int8',
@@ -106,7 +108,7 @@ export const getMaxValue = (type: TRuleType): number => {
   return MAX_VAULES_OF_NUMERIC_TYPES[type as TRuleNumericType];
 };
 
-export const isNumericValue = (type: TRuleType) =>
+export const isNumericValue = (type: TRuleType, msg?: string) =>
   z.string().refine(
     (val) => {
       if (isNumericType(type)) {
@@ -119,7 +121,8 @@ export const isNumericValue = (type: TRuleType) =>
       return false;
     },
     {
-      message: `Must be a valid integer, between ${getMinValue(type)} and ${getMaxValue(type)}`,
+      message:
+        msg || `Must be a valid integer, between ${getMinValue(type)} and ${getMaxValue(type)}`,
     }
   );
 
@@ -190,8 +193,7 @@ export const RuleSchema: Record<TRuleType, any> = {
     .transform((val) => val.trim())
     .refine((val) => isValidAddress(val), {
       message: 'Must be a valid address',
-    })
-    .optional(),
+    }),
   bool: z
     .string()
     .transform((val) => val.trim())
@@ -237,6 +239,7 @@ export const getValidOperators = (type: TRuleType): TOperator[] => {
 };
 
 export const parseValidationSchema = (schema: string): TRule[] => {
+  schema = schema.replace(/"/g, '');
   const lit = schema.split(',');
   if (lit.length == 0) {
     return [];
@@ -269,7 +272,7 @@ export const getValidationSchema = (rules: TRule[]) => {
     fields[rule.name] = RuleSchema[rule.type];
     fields[`${rule.name}_op`] = z.string().refine(
       (val) => {
-        return rule.ops.includes(val);
+        return rule.ops.includes(val as TOperator);
       },
       {
         message: 'Invalid operator for this field',
