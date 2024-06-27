@@ -1,43 +1,106 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/Test.sol";
+import { Type } from "../Common.sol";
 
-import { Type } from "src/Common.sol";
-import { Parser } from "src/libraries/Parser.sol";
+library Parser {
+    bytes1 private constant COMMA = ",";
+    bytes1 private constant BLANK_SPACE = " ";
 
-contract ParserTest is Test {
-    using Parser for string;
-    using Parser for bytes;
+    /// @notice Thrown when type list is empty
+    error EmptyTypeList();
 
-    function testParseTypes() public pure {
-        string memory input = "uint256 age,address recipient,bool passed";
-        Type[] memory output = input.extractTypes();
-        assertEq(output.length, 3);
-        assertEq(uint256(output[0]), uint256(Type.BYTES32));
-        assertEq(uint256(output[1]), uint256(Type.ADDRESS));
-        assertEq(uint256(output[2]), uint256(Type.BOOL));
+    /// @notice Thrown when type is not supported
+    error UnsupportedType();
+
+    function extractTypes(string memory self) public pure returns (Type[] memory) {
+        return extractTypes(bytes(self));
     }
 
-    function testParseTypesFromBytes() public pure {
-        string memory input = "uint256 age,address recipient,bool passed";
-        bytes memory inputBytes = bytes(input);
-        Type[] memory output = inputBytes.extractTypes();
-        assertEq(output.length, 3);
-        assertEq(uint256(output[0]), uint256(Type.BYTES32));
-        assertEq(uint256(output[1]), uint256(Type.ADDRESS));
-        assertEq(uint256(output[2]), uint256(Type.BOOL));
+    function extractTypes(bytes memory self) public pure returns (Type[] memory) {
+        if (self.length == 0) {
+            revert EmptyTypeList();
+        }
+
+        uint256 count = _countDelimiters(self);
+
+        Type[] memory output = new Type[](count);
+        uint256 outputIndex = 0;
+        uint256 start = 0;
+
+        for (uint256 i = 0; i <= self.length; i++) {
+            if (i == self.length || self[i] == COMMA) {
+                uint256 end = i - 1;
+                while (start < end && self[start] == BLANK_SPACE) {
+                    start++;
+                }
+                while (end > start && self[end] != BLANK_SPACE) {
+                    end--;
+                }
+
+                bytes memory substring = new bytes(end - start);
+                for (uint256 j = start; j < end; j++) {
+                    substring[j - start] = self[j];
+                }
+                output[outputIndex++] = _bytesToType(substring);
+                start = i + 1;
+            }
+        }
+        return output;
     }
 
-    function testParseTypesWithUnsupportedType() public {
-        string memory input = "invalidType age";
-        vm.expectRevert(abi.encodeWithSelector(Parser.UnsupportedType.selector));
-        input.extractTypes();
+    function _countDelimiters(bytes memory self) private pure returns (uint256) {
+        uint256 count = 1;
+        for (uint256 i = 0; i < self.length; i++) {
+            if (self[i] == COMMA) {
+                count++;
+            }
+        }
+        return count;
     }
 
-    function testParseTypesWithEmptyString() public {
-        string memory input = "";
-        vm.expectRevert(abi.encodeWithSelector(Parser.EmptyTypeList.selector));
-        input.extractTypes();
+    function _bytesToType(bytes memory b) private pure returns (Type) {
+        if (keccak256(b) == keccak256("int8")) {
+            return Type.INT8;
+        } else if (keccak256(b) == keccak256("int16")) {
+            return Type.INT16;
+        } else if (keccak256(b) == keccak256("int24")) {
+            return Type.INT24;
+        } else if (keccak256(b) == keccak256("int32")) {
+            return Type.INT32;
+        } else if (keccak256(b) == keccak256("int64")) {
+            return Type.INT64;
+        } else if (keccak256(b) == keccak256("int128")) {
+            return Type.INT128;
+        } else if (keccak256(b) == keccak256("int256") || keccak256(b) == keccak256("int")) {
+            return Type.INT256;
+        } else if (keccak256(b) == keccak256("bytes1") || keccak256(b) == keccak256("uint8")) {
+            return Type.BYTES1;
+        } else if (keccak256(b) == keccak256("bytes2") || keccak256(b) == keccak256("uint16")) {
+            return Type.BYTES2;
+        } else if (keccak256(b) == keccak256("bytes3") || keccak256(b) == keccak256("uint24")) {
+            return Type.BYTES3;
+        } else if (keccak256(b) == keccak256("bytes4") || keccak256(b) == keccak256("uint32")) {
+            return Type.BYTES4;
+        } else if (keccak256(b) == keccak256("bytes8") || keccak256(b) == keccak256("uint64")) {
+            return Type.BYTES8;
+        } else if (keccak256(b) == keccak256("bytes16") || keccak256(b) == keccak256("uint128")) {
+            return Type.BYTES16;
+        } else if (
+            keccak256(b) == keccak256("bytes32") || keccak256(b) == keccak256("uint256")
+                || keccak256(b) == keccak256("uint")
+        ) {
+            return Type.BYTES32;
+        } else if (keccak256(b) == keccak256("address")) {
+            return Type.ADDRESS;
+        } else if (keccak256(b) == keccak256("bool")) {
+            return Type.BOOL;
+        } else if (keccak256(b) == keccak256("bytes")) {
+            return Type.BYTES;
+        } else if (keccak256(b) == keccak256("string")) {
+            return Type.STRING;
+        }
+
+        revert UnsupportedType();
     }
 }

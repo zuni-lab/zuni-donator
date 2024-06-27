@@ -16,21 +16,27 @@ contract SmartVault is ISmartVault {
     IEAS private constant _eas = IEAS(Predeploys.EAS);
     ISchemaRegistry private constant _schemaRegistry = ISchemaRegistry(Predeploys.SCHEMA_REGISTRY);
 
-    mapping(bytes32 vaultId => Rules rules) private rules;
+    mapping(bytes32 vaultId => Rules rules) private _rules;
     mapping(bytes32 vaultId => uint256 raised) public vaultRaised;
     mapping(bytes32 vaultId => uint256 balance) public vaultBalance;
+    mapping(bytes32 claimId => bool) private _claimed;
 
     bytes32 public immutable vaultSchema;
+    bytes32 public immutable contributeSchema;
+    bytes32 public immutable claimSchema;
 
-    constructor(bytes32 _vaultSchema) {
+    constructor(bytes32 _vaultSchema, bytes32 _contributeSchema, bytes32 _claimSchema) {
         vaultSchema = _vaultSchema;
+        contributeSchema = _contributeSchema;
+        claimSchema = _claimSchema;
     }
 
+    /// @notice ISmartVault
     function createVault(
         string memory name,
         string memory description,
-        uint256 depositStart,
-        uint256 depositEnd,
+        uint256 contributeStart,
+        uint256 contributeEnd,
         bytes32 validationSchema,
         Operator[] memory operators,
         bytes[] memory thresholds,
@@ -43,11 +49,11 @@ contract SmartVault is ISmartVault {
             revert NameEmpty();
         }
 
-        if (depositStart >= depositEnd || depositEnd < block.timestamp) {
-            revert DepositEndInvalid();
+        if (contributeStart >= contributeEnd || contributeEnd < block.timestamp) {
+            revert ContributeTimeInvalid();
         }
 
-        bytes memory input = abi.encode(name, description, depositStart, depositEnd, validationSchema);
+        bytes memory input = abi.encode(name, description, contributeStart, contributeEnd, validationSchema);
 
         AttestationRequestData memory data = AttestationRequestData({
             recipient: msg.sender,
@@ -74,53 +80,75 @@ contract SmartVault is ISmartVault {
             revert ClaimDataInvalid();
         }
 
-        rules[vaultId] = Rules(types, operators, thresholds, claimData);
+        _rules[vaultId] = Rules(types, operators, thresholds, claimData);
 
         emit CreateVault(vaultId);
 
         return vaultId;
     }
 
-    function deposit(bytes32 vaultId) external payable {
+    /// @notice ISmartVault
+    function contribute(bytes32 vaultId) external payable {
         Attestation memory attestation = _eas.getAttestation(vaultId);
         if (attestation.uid != vaultId) {
             revert VaultNotFound();
         }
 
-        (uint256 depositStart, uint256 depositEnd) = _getDepositTimeFromAttestationData(attestation.data);
-        if (block.timestamp < depositStart) {
-            revert DepositNotStarted();
+        (uint256 contributeStart, uint256 contributeEnd) = _getcontributeTimeFromAttestationData(attestation.data);
+        if (block.timestamp < contributeStart) {
+            revert ContributeNotStarted();
         }
-        if (block.timestamp > depositEnd) {
-            revert DepositEnded();
+        if (block.timestamp > contributeEnd) {
+            revert ContributeEnded();
         }
 
-        vaultRaised[vaultId] += msg.value;
+        address contributor = msg.sender;
+        uint256 amount = msg.value;
+
+        vaultRaised[vaultId] += amount;
         vaultBalance[vaultId] = vaultRaised[vaultId];
 
-        emit Deposit(vaultId, msg.sender, msg.value);
+        // attest contribution
+        AttestationRequestData memory data = AttestationRequestData({
+            recipient: contributor,
+            expirationTime: NO_EXPIRATION_TIME,
+            revocable: false,
+            refUID: vaultId,
+            data: abi.encode(vaultId, contributor, amount, block.timestamp),
+            value: 0
+        });
+        bytes32 contributionId = _eas.attest(AttestationRequest(contributeSchema, data));
+
+        emit Contribute(vaultId, contributor, contributionId, amount);
     }
 
-    // check claimed or not
-    // check revocable or not
+    /// @notice ISmartVault
     function claim(bytes32 vaultId, bytes32 attestionUID) external {
         Attestation memory vaultAttestation = _eas.getAttestation(vaultId);
         if (vaultAttestation.uid != vaultId) {
             revert VaultNotFound();
         }
 
-        (, uint256 depositEnd) = _getDepositTimeFromAttestationData(vaultAttestation.data);
-        if (block.timestamp < depositEnd) {
-            revert DepositNotEnded();
+        (, uint256 contributeEnd) = _getcontributeTimeFromAttestationData(vaultAttestation.data);
+        if (block.timestamp < contributeEnd) {
+            revert ClaimNotStarted();
         }
 
         Attestation memory validationAttestation = _eas.getAttestation(attestionUID);
         if (validationAttestation.uid != attestionUID) {
             revert AttestationNotFound();
         }
+        if (validationAttestation.revocationTime != 0 && validationAttestation.revocationTime < block.timestamp) {
+            revert AttestationRevoked();
+        }
+
+        bytes32 claimId = _getClaimId(vaultId, attestionUID);
+        if (_claimed[attestionUID]) {
+            revert Claimed();
+        }
 
         bytes memory validationData = validationAttestation.data;
-        Rules memory rule = rules[vaultId];
+        Rules memory rule = _rules[vaultId];
 
         bytes32 pointer;
         assembly {
@@ -280,22 +308,42 @@ contract SmartVault is ISmartVault {
 
         uint256 _vaultBalance = vaultBalance[vaultId];
         if (_vaultBalance == 0) {
-            revert ClaimedRaisedAmount();
+            revert Finished();
         }
 
         if (claimAmount > _vaultBalance) {
             claimAmount = _vaultBalance;
         }
         vaultBalance[vaultId] = _vaultBalance - claimAmount;
+        _claimed[claimId] = true;
+
+        // attest claim
+        AttestationRequestData memory data = AttestationRequestData({
+            recipient: validationAttestation.recipient,
+            expirationTime: NO_EXPIRATION_TIME,
+            revocable: false,
+            refUID: vaultId,
+            data: abi.encode(vaultId, validationAttestation.recipient, claimAmount, block.timestamp),
+            value: 0
+        });
+        bytes32 contributionId = _eas.attest(AttestationRequest(contributeSchema, data));
 
         (bool success,) = validationAttestation.recipient.call{ value: claimAmount }("");
         require(success, "SmartVault: claim failed");
 
-        emit Claim(vaultId, attestionUID, claimAmount);
+        emit Claim(vaultId, attestionUID, contributionId, claimAmount);
     }
 
+    /// @notice ISmartVault
     function getRules(bytes32 vaultId) external view returns (Type[] memory, Operator[] memory, bytes[] memory) {
-        return (rules[vaultId].types, rules[vaultId].operators, rules[vaultId].thresholds);
+        Rules memory rules = _rules[vaultId];
+        return (rules.types, rules.operators, rules.thresholds);
+    }
+
+    /// @notice ISmartVault
+    function isClaimed(bytes32 vaultId, bytes32 attestionUID) external view returns (bool) {
+        bytes32 claimId = _getClaimId(vaultId, attestionUID);
+        return _claimed[claimId];
     }
 
     function _checkBytes32(Operator operator, bytes32 value, bytes32 threshold) private pure {
@@ -370,15 +418,19 @@ contract SmartVault is ISmartVault {
         }
     }
 
-    function _getDepositTimeFromAttestationData(bytes memory data)
+    function _getcontributeTimeFromAttestationData(bytes memory data)
         private
         pure
-        returns (uint256 depositStart, uint256 depositEnd)
+        returns (uint256 contributeStart, uint256 contributeEnd)
     {
         assembly {
             // skip length, name, description
-            depositStart := mload(add(data, 0x60))
-            depositEnd := mload(add(data, 0x80))
+            contributeStart := mload(add(data, 0x60))
+            contributeEnd := mload(add(data, 0x80))
         }
+    }
+
+    function _getClaimId(bytes32 vaultId, bytes32 attestionUID) private pure returns (bytes32) {
+        return keccak256(abi.encode(vaultId, attestionUID));
     }
 }
