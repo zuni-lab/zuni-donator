@@ -4,7 +4,8 @@ import { RecentVaultSection } from './sections/RecentVaultSection';
 import { StatSection } from './sections/StatSection';
 import { Heading } from '@/components/Heading';
 import { AboutSection } from './sections/AboutSection';
-import { RouterMeta } from '@/constants/router';
+import { AppRouter, RouterMeta } from '@/constants/router';
+import Link from 'next/link';
 
 export const metadata: Metadata = RouterMeta.Home;
 
@@ -16,7 +17,11 @@ export default function HomePage() {
           title="Zuni Vault"
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         />
-        <Button className="h-12 text-lg px-6">Get Started</Button>
+        <Link href={AppRouter.Vaults} passHref legacyBehavior>
+          <a>
+            <Button className="h-12 text-lg px-6">Get Started</Button>
+          </a>
+        </Link>
       </div>
       <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div>
       <AboutSection />

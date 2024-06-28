@@ -16,19 +16,34 @@ type TRuleNumericType =
   | 'uint128'
   | 'uint256';
 
-type TRuleBytesType = 'bytes1' | 'bytes2' | 'bytes4' | 'bytes8' | 'bytes16' | 'bytes32' | 'bytes';
+type TRuleBytesType =
+  | 'bytes1'
+  | 'bytes2'
+  | 'bytes3'
+  | 'bytes4'
+  | 'bytes8'
+  | 'bytes16'
+  | 'bytes32'
+  | 'bytes';
 
 type TDeclareStmt = {
   type: TRuleType;
   name: string;
 };
 
-type TRule = {
+type TSupportedRule = {
   type: TRuleType;
   name: string;
   ops: TOperator[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue?: any;
 };
+
+type TUnsupportedRule = {
+  type: string;
+  typeOfRule: 'unsupported';
+  name: string;
+  ops: TOperator[];
+};
+
+type TRule = TSupportedRule | TUnsupportedRule;
 
 type TOperator = 'EQ' | 'NE' | 'GT' | 'GE' | 'LT' | 'LE' | 'NONE';

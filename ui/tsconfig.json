@@ -28,7 +28,10 @@
       ],
       "@/shadcn/*": [
         "./components/shadcn/*"
-      ]
+      ],
+      "@/vaults/*": [
+        "./utils/vaults/*"
+      ],
     },
     "noEmit": true,
     "strictNullChecks": true

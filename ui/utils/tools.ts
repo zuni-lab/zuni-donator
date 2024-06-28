@@ -1,10 +1,10 @@
-import classNames from 'classnames';
 import moment from 'moment';
+import classNames from 'classnames';
 
 /**
  * Mapping hotkey into className package for better usage
  */
-export const cx = classNames;
+export const cx: typeof classNames = classNames;
 
 export const formatWalletAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-6)}`;

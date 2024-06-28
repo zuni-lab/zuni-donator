@@ -6,18 +6,18 @@ import { Input } from '@/shadcn/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shadcn/Select';
 
 import { SMART_VAULT_ABI } from '@/constants/abi';
-import { BLACK_LIST_SCHEMA } from '@/constants/schema';
 import { useActionDebounce } from '@/hooks/useAction';
 import { useSchemaStore } from '@/states/schema';
-import { ClaimType, isValidType } from '@/utils/claim';
+import { ClaimType, isValidType } from '@/vaults/claim';
+import { getOperatorLabel, getOperatorNumber, RuleOperators } from '@/vaults/operators';
+import { getMaxValue, isNumericType } from '@/utils/vaults/types';
 import {
-  getMaxValue,
-  getOperatorLabel,
-  getOperatorNumber,
   getValidationSchema,
-  isNumericType,
   parseValidationSchema,
-} from '@/utils/rule';
+  isUnsupportedRule,
+  validateField,
+} from '@/utils/vaults/schema';
+
 import { isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
 import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +27,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
-import { useWaitForTransactionReceipt, useWriteContract, type BaseError } from 'wagmi';
+import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 
 import { z } from 'zod';
@@ -51,30 +51,53 @@ const latterThanCurrentTimeTenMinutes = (msg: string) =>
   );
 
 const baseFormSchema = z.object({
-  name: z
+  _zuni_smv_name: z
     .string()
     .transform((val) => val.trim())
     .refine((val) => val.length > 0, 'Name is required'),
-  description: z
+  _zuni_smv_description: z
     .string()
     .transform((val) => val.trim())
     .refine((val) => val.length > 0, 'Description is required'),
-  depositStart: latterThanCurrentTimeTenMinutes(
+  _zuni_smv_depositStart: latterThanCurrentTimeTenMinutes(
     'Deposit start must be at least 10 minutes in the future'
   ),
-  depositEnd: latterThanCurrentTimeTenMinutes(
+  _zuni_smv_depositEnd: latterThanCurrentTimeTenMinutes(
     'Deposit end must be at least 10 minutes in the future'
   ),
-  claimType: z.enum(['FIXED', 'PERCENTAGE'], { message: 'Claim type is required' }),
-  claimAmount: z.string().optional(),
-  claimPercentage: z.string().optional(),
-  validationSchema: z
+  _zuni_smv_claimType: z.enum(['FIXED', 'PERCENTAGE'], { message: 'Claim type is required' }),
+  _zuni_smv_claimAmount: z.string().optional(),
+  _zuni_smv_claimPercentage: z.string().optional(),
+  _zuni_smv_validationSchema: z
     .string()
     .transform((val) => val.trim())
     .refine((val) => isValidBytesWithLength(val, 32), {
       message: 'Validation schema must be a valid bytes string, eg. 0x3a2fa...80a42',
     }),
 });
+
+const baseDefaultValues = {
+  _zuni_smv_name: '',
+  _zuni_smv_description: '',
+  _zuni_smv_depositEnd: tenMinutesLater.toISOString().slice(0, 16),
+  _zuni_smv_depositStart: tenMinutesLater.toISOString().slice(0, 16),
+  _zuni_smv_claimType: '',
+  _zuni_smv_claimAmount: '',
+  _zuni_smv_claimPercentage: '',
+  _zuni_smv_validationSchema: '',
+};
+
+const genDefaultValues = (rules: TRule[]) => {
+  let defaultValues = { ...baseDefaultValues };
+  rules.forEach((rule) => {
+    defaultValues = {
+      ...defaultValues,
+      [rule.name]: '',
+      [`${rule.name}_op`]: isUnsupportedRule(rule) ? 'NONE' : '',
+    };
+  });
+  return defaultValues;
+};
 
 export const VaultForm: IComponent = () => {
   const { registry } = useSchemaStore();
@@ -83,38 +106,44 @@ export const VaultForm: IComponent = () => {
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const { data: hash, isPending, writeContract, error } = useWriteContract();
+  const { data: hash, isPending, writeContract, isSuccess } = useWriteContract();
 
   const combinedSchema = baseFormSchema
     .extend(dynamicSchema.shape)
     .refine(
       (data) => {
-        const depositStart = new Date(data.depositStart).getTime();
-        const depositEnd = new Date(data.depositEnd).getTime();
+        const depositStart = new Date(data._zuni_smv_depositStart).getTime();
+        const depositEnd = new Date(data._zuni_smv_depositEnd).getTime();
         return depositStart < depositEnd;
       },
       {
         message: 'Deposit end must be greater than deposit start',
-        path: ['depositEnd'],
+        path: ['_zuni_smv_depositEnd'],
       }
     )
     .superRefine((data, ctx) => {
       let valid = false;
       let path = '';
       let msg = '';
-      if (data.claimType === 'FIXED' && data.claimAmount) {
-        if (isValidFloat(data.claimAmount) && !isNaN(parseFloat(data.claimAmount))) {
-          const num = parseFloat(data.claimAmount);
+      if (data._zuni_smv_claimType === 'FIXED' && data._zuni_smv_claimAmount) {
+        if (
+          isValidFloat(data._zuni_smv_claimAmount) &&
+          !isNaN(parseFloat(data._zuni_smv_claimAmount))
+        ) {
+          const num = parseFloat(data._zuni_smv_claimAmount);
           valid = num > 0 && num <= getMaxValue('uint64');
         }
-        path = 'claimAmount';
+        path = '_zuni_smv_claimAmount';
         msg = 'Claim amount must be a valid number, greater than 0 and less than 2^64';
-      } else if (data.claimType === 'PERCENTAGE' && data.claimPercentage) {
-        if (isValidFloat(data.claimPercentage) && !isNaN(parseFloat(data.claimPercentage))) {
-          const num = parseFloat(data.claimPercentage);
+      } else if (data._zuni_smv_claimType === 'PERCENTAGE' && data._zuni_smv_claimPercentage) {
+        if (
+          isValidFloat(data._zuni_smv_claimPercentage) &&
+          !isNaN(parseFloat(data._zuni_smv_claimPercentage))
+        ) {
+          const num = parseFloat(data._zuni_smv_claimPercentage);
           valid = num >= 0 && num <= 100;
         }
-        path = 'claimPercentage';
+        path = '_zuni_smv_claimPercentage';
         msg = 'Claim percentage must be a valid number between 0 and 100';
       }
       if (!valid) {
@@ -126,24 +155,7 @@ export const VaultForm: IComponent = () => {
       }
     });
 
-  let defaultValues = {
-    name: '',
-    description: '',
-    depositEnd: tenMinutesLater.toISOString().slice(0, 16),
-    depositStart: tenMinutesLater.toISOString().slice(0, 16),
-    claimType: '',
-    claimAmount: '',
-    claimPercentage: '',
-    validationSchema: '',
-  };
-
-  parsedRules.forEach((rule) => {
-    defaultValues = {
-      ...defaultValues,
-      [rule.name]: rule.defaultValue,
-      [`${rule.name}_op`]: '',
-    };
-  });
+  const defaultValues = genDefaultValues(parsedRules);
 
   const form = useForm({
     resolver: zodResolver(combinedSchema),
@@ -152,13 +164,32 @@ export const VaultForm: IComponent = () => {
 
   const { control, handleSubmit, watch } = form;
 
-  const watchValidationSchema = watch('validationSchema').trim();
+  const watchValidationSchema = watch('_zuni_smv_validationSchema').trim();
 
   const reset = useCallback(() => {
-    form.reset();
     setParsedRules([]);
     setDynamicSchema(z.object({}));
-  }, [form, setParsedRules, setDynamicSchema]);
+  }, [setParsedRules, setDynamicSchema]);
+
+  useEffect(() => {
+    parsedRules.forEach((rule) => {
+      if (!isUnsupportedRule(rule)) {
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ruleName = rule.name as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ruleNameOp = `${ruleName}_op` as any;
+
+      if (!form.getValues(ruleNameOp)) {
+        form.setValue(ruleNameOp, 'NONE');
+      }
+
+      if (form.getValues(ruleName) === undefined) {
+        form.setValue(ruleName, '');
+      }
+    });
+  }, [parsedRules, form]);
 
   useEffect(() => {
     if (!registry) {
@@ -168,27 +199,30 @@ export const VaultForm: IComponent = () => {
       setLoading(true);
       if (!isValidBytesWithLength(watchValidationSchema, 32)) {
         reset();
+        form.clearErrors('_zuni_smv_validationSchema');
         setLoading(false);
         return;
       }
       try {
         const schemaRecord = await registry?.getSchema({ uid: watchValidationSchema });
         if (!schemaRecord) {
+          form.setError('_zuni_smv_validationSchema', {
+            message: 'The validation schema is not found',
+          });
           reset();
           setLoading(false);
           return;
         }
-
-        if (BLACK_LIST_SCHEMA.includes(schemaRecord.schema)) {
-          reset();
-          setLoading(false);
-          return;
-        }
-
         const rules = parseValidationSchema(schemaRecord.schema);
         setParsedRules(rules);
         setDynamicSchema(getValidationSchema(rules));
+        form.clearErrors('_zuni_smv_validationSchema');
       } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.setError('_zuni_smv_validationSchema', {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          message: (error as any).message || 'Invalid schema',
+        });
         reset();
       } finally {
         setLoading(false);
@@ -198,86 +232,143 @@ export const VaultForm: IComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchValidationSchema, registry, reset]);
 
+  useEffect(() => {
+    if (isSuccess) {
+      form.reset();
+      reset();
+    }
+  }, [isSuccess, form, reset]);
+
+  console.log({ currentFormState: form.getValues() });
+  console.log({ formErrors: form.formState.errors });
+
   const handlePressSubmit = handleSubmit((values) => {
     if (parsedRules.length === 0) {
-      form.setError('validationSchema', { message: 'The validation schema is invalid' });
+      form.setError('_zuni_smv_validationSchema', { message: 'The validation schema is invalid' });
       return;
     }
 
     const ops: number[] = [];
     const thresholds: `0x${string}`[] = [];
+    let isError = false;
 
     parsedRules.forEach((rule) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const opKey = (values as any)[`${rule.name}_op` as any];
+      const ruleName = rule.name as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ruleNameOp = `${ruleName}_op` as any;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opKey = (values as any)[ruleNameOp];
       if (!opKey) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        form.setError(`${rule.name}_op` as any, { message: 'Operator is required' });
+        form.setError(ruleNameOp, { message: 'Operator is required' });
+        isError = true;
         return;
       }
 
       const op = getOperatorNumber(opKey);
       if (op === undefined) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        form.setError(`${rule.name}_op` as any, { message: 'Invalid operator' });
+        form.setError(ruleNameOp, { message: 'Invalid operator' });
+        isError = true;
+        return;
+      }
+
+      if (isUnsupportedRule(rule)) {
+        form.clearErrors(ruleNameOp);
+        ops.push(op);
+        thresholds.push('0x');
+        return;
+      }
+
+      // supported rule
+
+      // operator is NONE, clear error
+      if (op === RuleOperators.NONE[0]) {
+        form.clearErrors(ruleNameOp);
+        ops.push(op);
+        thresholds.push('0x');
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const value = (values as any)[ruleName];
+      const [valid, msg] = validateField(rule.type, value);
+      if (!valid) {
+        form.setError(ruleName, { message: msg });
+        isError = true;
         return;
       }
       ops.push(op);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const value = (values as any)[rule.name as any];
       const encodedData = encodeAbiParameters([{ type: rule.type }], [value]);
       thresholds.push(encodedData);
     });
 
+    if (isError) {
+      return;
+    }
+
     if (ops.length === 0 || thresholds.length === 0) {
-      form.setError('validationSchema', { message: 'Invalid schema' });
+      form.setError('_zuni_smv_validationSchema', { message: 'Invalid schema' });
       return;
     }
 
     if (ops.length !== thresholds.length) {
-      form.setError('validationSchema', { message: 'Invalid schema' });
+      form.setError('_zuni_smv_validationSchema', { message: 'Invalid schema' });
       return;
     }
 
-    if (!isValidType(values.claimType)) {
-      form.setError('claimType', { message: 'Claim type is required' });
+    if (!isValidType(values._zuni_smv_claimType)) {
+      form.setError('_zuni_smv_claimType', { message: 'Claim type is required' });
       return;
     }
 
     let claimData: TClaimData = {} as TClaimData;
-    if (values.claimType === 'FIXED') {
+    if (values._zuni_smv_claimType === 'FIXED') {
       claimData = {
         claimType: ClaimType.FIXED,
-        fixedAmount: BigInt(parseFloat(values.claimAmount) * 1e18),
+        fixedAmount: BigInt(parseFloat(values._zuni_smv_claimAmount) * 1e18),
         percentage: BigInt(0),
         customData: '0x' as `0x${string}`,
       };
-    } else if (values.claimType === 'PERCENTAGE') {
+    } else if (values._zuni_smv_claimType === 'PERCENTAGE') {
       claimData = {
         claimType: ClaimType.PERCENTAGE,
         fixedAmount: BigInt(0),
-        percentage: BigInt(parseFloat(values.claimPercentage) * 1e18),
+        percentage: BigInt(parseFloat(values._zuni_smv_claimPercentage) * 1e18),
         customData: '0x' as `0x${string}`,
       };
     }
+
+    console.log({
+      args: [
+        values._zuni_smv_name,
+        values._zuni_smv_description,
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
+        values._zuni_smv_validationSchema as `0x${string}`,
+        ops,
+        thresholds,
+        claimData,
+      ],
+    });
 
     writeContract({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
       abi: SMART_VAULT_ABI,
       functionName: 'createVault',
       args: [
-        values.name,
-        values.description,
-        BigInt(toUtcTime(new Date(values.depositStart)).getTime()),
-        BigInt(toUtcTime(new Date(values.depositEnd)).getTime()),
-        values.validationSchema as `0x${string}`,
+        values._zuni_smv_name,
+        values._zuni_smv_description,
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
+        values._zuni_smv_validationSchema as `0x${string}`,
         ops,
         thresholds,
         claimData,
       ],
-    });
-    debounce(() => {
-      reset();
     });
   });
 
@@ -306,13 +397,13 @@ export const VaultForm: IComponent = () => {
   const renderInputField = useCallback(
     (props: {
       name:
-        | 'name'
-        | 'description'
-        | 'depositStart'
-        | 'depositEnd'
-        | 'validationSchema'
-        | 'claimAmount'
-        | 'claimPercentage';
+        | '_zuni_smv_name'
+        | '_zuni_smv_description'
+        | '_zuni_smv_depositStart'
+        | '_zuni_smv_depositEnd'
+        | '_zuni_smv_validationSchema'
+        | '_zuni_smv_claimAmount'
+        | '_zuni_smv_claimPercentage';
       label: string;
       placeholder: string;
       type?: 'text' | 'datetime-local';
@@ -356,6 +447,7 @@ export const VaultForm: IComponent = () => {
 
   const renderRuleOp = useCallback(
     (rule: TRule) => {
+      const isSupportedRule = !isUnsupportedRule(rule);
       return (
         <FormField
           control={control}
@@ -363,21 +455,28 @@ export const VaultForm: IComponent = () => {
           name={`${rule.name}_op` as any}
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Operator" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {rule.ops.map((op, index) => (
-                    <SelectItem key={index} value={op}>
-                      {getOperatorLabel(op)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
+              {!isSupportedRule && (
+                <Input {...field} disabled readOnly value={RuleOperators.NONE[1]} />
+              )}
+              {isSupportedRule && (
+                <>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Operator" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {rule.ops.map((op, index) => (
+                        <SelectItem key={index} value={op}>
+                          {getOperatorLabel(op)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </>
+              )}
             </FormItem>
           )}
         />
@@ -397,21 +496,40 @@ export const VaultForm: IComponent = () => {
             <FormItem className="col-span-2">
               <FormControl>
                 {(() => {
+                  const isUnSupported = isUnsupportedRule(rule);
+                  if (isUnSupported) {
+                    return (
+                      <Input
+                        {...field}
+                        disabled
+                        placeholder={"This type of rule isn't supported"}
+                        className={cx(
+                          'bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700 placeholder:text-destructive'
+                        )}
+                      />
+                    );
+                  }
+
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const isDisable = watch(`${rule.name}_op` as any) === 'NONE';
+
                   if (isNumericType(rule.type)) {
                     return (
                       <Input
-                        // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
-                        placeholder={`The value of ${rule.name} threshold`}
                         {...field}
+                        disabled={isDisable}
+                        value={isDisable ? '' : field.value}
+                        placeholder={`The value of ${rule.name} threshold`}
                         className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
                       />
                     );
                   } else if (rule.type === 'bool') {
                     return (
                       <Select
-                        // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        disabled={watch(`${rule.name}_op` as any) === 'NONE'}
                         onValueChange={field.onChange}
-                        defaultValue={field.value}>
+                        value={isDisable ? '' : field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-white focus:ring-blue-300 border-blue-400 [&>*]:text-gray-700">
                             <SelectValue placeholder="Select a value" />
@@ -426,9 +544,10 @@ export const VaultForm: IComponent = () => {
                   }
                   return (
                     <Input
-                      // disabled={watch(`${rule.name}_op` as any) === 'NONE'}
-                      placeholder={`The value of ${rule.name} threshold`}
                       {...field}
+                      disabled={isDisable}
+                      value={isDisable ? '' : field.value}
+                      placeholder={`The value of ${rule.name} threshold`}
                       className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
                     />
                   );
@@ -440,10 +559,10 @@ export const VaultForm: IComponent = () => {
         />
       );
     },
-    [control]
+    [control, watch]
   );
 
-  const watchClaimType = watch('claimType');
+  const watchClaimType = watch('_zuni_smv_claimType');
 
   const renderClaim = useCallback(() => {
     return (
@@ -451,7 +570,7 @@ export const VaultForm: IComponent = () => {
         <FormField
           control={control}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          name="claimType"
+          name="_zuni_smv_claimType"
           render={({ field }) => (
             <FormItem
               className={cx({
@@ -478,14 +597,14 @@ export const VaultForm: IComponent = () => {
         />
         {watchClaimType === 'FIXED' &&
           renderInputField({
-            name: 'claimAmount',
+            name: '_zuni_smv_claimAmount',
             label: 'Amount (ETH)',
             placeholder: 'Eg. 10',
             className: 'translate-y-[4px]',
           })}
         {watchClaimType === 'PERCENTAGE' &&
           renderInputField({
-            name: 'claimPercentage',
+            name: '_zuni_smv_claimPercentage',
             label: 'Percentage (%)',
             placeholder: 'Eg. 0-100',
           })}
@@ -497,26 +616,26 @@ export const VaultForm: IComponent = () => {
     <Form {...form}>
       <form onSubmit={handlePressSubmit} className="space-y-2">
         {renderInputField({
-          name: 'name',
+          name: '_zuni_smv_name',
           label: 'Name',
           placeholder: 'The name of the vault',
         })}
 
         {renderInputField({
-          name: 'description',
+          name: '_zuni_smv_description',
           label: 'Description',
           placeholder: 'The description of the vault',
         })}
 
         <div className="grid grid-cols-2 gap-2">
           {renderInputField({
-            name: 'depositStart',
+            name: '_zuni_smv_depositStart',
             label: 'Deposit start (UTC)',
             placeholder: 'The start of the deposit period',
             type: 'datetime-local',
           })}
           {renderInputField({
-            name: 'depositEnd',
+            name: '_zuni_smv_depositEnd',
             label: 'Deposit end (UTC)',
             placeholder: 'The end of the deposit period',
             type: 'datetime-local',
@@ -524,7 +643,7 @@ export const VaultForm: IComponent = () => {
         </div>
         {renderClaim()}
         {renderInputField({
-          name: 'validationSchema',
+          name: '_zuni_smv_validationSchema',
           label: 'Validation schema',
           placeholder: 'The UID of the validation schema. Eg.0x3a2fa...80a42',
           renderSuffix: renderSchemaStatus,
@@ -536,9 +655,12 @@ export const VaultForm: IComponent = () => {
             </h3>
             <div className="max-h-[45vh] overflow-y-auto space-y-2">
               {parsedRules.map((rule, index) => {
+                const isSupportedRule = !isUnsupportedRule(rule);
                 return (
                   <div key={index} className="grid grid-cols-3 gap-2">
-                    <FormLabel className="col-span-3" required={rule.type !== 'string'}>
+                    <FormLabel
+                      className="col-span-3"
+                      required={isSupportedRule && rule.type !== 'string'}>
                       {rule.name}
                       <span className="ml-1 text-gray-500 text-xs">({rule.type})</span>
                     </FormLabel>
@@ -559,11 +681,11 @@ export const VaultForm: IComponent = () => {
             )}
           </Button>
         </div>
-        {error && (
+        {/* {error && (
           <div className="text-destructive">
             Error: {(error as BaseError).shortMessage || error.message}
           </div>
-        )}
+        )} */}
         {hash && (
           <div className="text-gray-700 text-sm flex flex-col">
             Transaction ID:
