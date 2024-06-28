@@ -8,39 +8,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/Card';
-import { getFormattedTimeAndDate, formatWalletAddress } from '@/utils/tools';
 import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
-import { CopyToClipboard } from '../CopyToClipboard';
 
-export const VaultCard: IComponent<TVault> = ({
-  uuid,
-  title,
-  description,
-  rules,
-  creator,
-  createdAt,
-}) => {
+export const VaultCard: IComponent<TVault> = ({ uuid, description }) => {
   return (
     <CardContainer
-      title={title}
+      title={'Vault #' + uuid}
       description={description}
       link={`/vaults/${uuid}`}
       linkTitle="Explore the vault"
       className="min-h-[400px] hover:scale-105 duration-150 group"
       renderFooter={() => (
         <div className="w-full flex items-center justify-between text-sm">
-          <CopyToClipboard text={creator}>
+          {/* <CopyToClipboard text={creator}>
             By <span className="text-primary font-bold">@{formatWalletAddress(creator)}</span>
           </CopyToClipboard>
-          <span>At {getFormattedTimeAndDate(createdAt)}</span>
+          <span>At {getFormattedTimeAndDate(createdAt)}</span> */}
         </div>
       )}>
       <div>
         <h4 className="text-xl">#{uuid}</h4>
-        {rules.map((rule, index) => (
+        {/* {rules.map((rule, index) => (
           <div key={index}>{rule}</div>
-        ))}
+        ))} */}
       </div>
     </CardContainer>
   );

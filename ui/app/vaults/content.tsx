@@ -27,7 +27,7 @@ export const PageContent: IComponent<{
         }
         setSelectedVaults(
           data.filter(
-            (vault) => vault.title.includes(e.target.value) || vault.uuid.includes(e.target.value)
+            (vault) => vault.name.includes(e.target.value) || vault.uuid.includes(e.target.value)
           )
         );
         setLoading(false);

@@ -1,11 +1,11 @@
-import { Button } from '@/components/shadcn/Button';
-import { Metadata } from 'next';
-import { RecentVaultSection } from './sections/RecentVaultSection';
-import { StatSection } from './sections/StatSection';
 import { Heading } from '@/components/Heading';
-import { AboutSection } from './sections/AboutSection';
+import { Button } from '@/components/shadcn/Button';
 import { AppRouter, RouterMeta } from '@/constants/router';
+import { Metadata } from 'next';
 import Link from 'next/link';
+import { AboutSection } from './sections/AboutSection';
+import { CommingSoonVaultSection } from './sections/CommingSoonVaultSection';
+import { StatSection } from './sections/StatSection';
 
 export const metadata: Metadata = RouterMeta.Home;
 
@@ -25,7 +25,7 @@ export default function HomePage() {
       </div>
       <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div>
       <AboutSection />
-      <RecentVaultSection />
+      <CommingSoonVaultSection />
       <StatSection />
     </main>
   );

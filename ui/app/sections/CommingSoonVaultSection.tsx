@@ -5,7 +5,8 @@ import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 
 // TODO: fetch onchain data
-export const RecentVaultSection: IComponent = () => {
+
+export const CommingSoonVaultSection: IComponent = () => {
   return (
     <section className="mt-8">
       <h1 className="title">Recent Vaults</h1>

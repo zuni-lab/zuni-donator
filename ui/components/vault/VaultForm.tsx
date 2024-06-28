@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useActionDebounce } from '@/hooks/useAction';
-import { useSchemaStore } from '@/states/schema';
 import {
   getValidationSchema,
   isUnsupportedRule,
@@ -28,6 +27,7 @@ import { useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
 import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
+import { useSchemaRegistry } from '@/hooks/useSchemaRegisty';
 import { z } from 'zod';
 import { TooltipWrapper } from '../TooltipWrapper';
 import { TxDialog } from './TxDialog';
@@ -99,7 +99,9 @@ const genDefaultValues = (rules: TRule[]) => {
 };
 
 export const VaultForm: IComponent = () => {
-  const { registry } = useSchemaStore();
+  const { registry, error } = useSchemaRegistry(
+    ProjectENV.NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS
+  );
   const debounce = useActionDebounce(1000, true);
 
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
@@ -192,9 +194,15 @@ export const VaultForm: IComponent = () => {
   }, [parsedRules, form]);
 
   useEffect(() => {
+    if (error) {
+      console.error('Error fetching schema registry:', error);
+      return;
+    }
+
     if (!registry) {
       return;
     }
+
     debounce(async () => {
       setLoading(true);
       if (!isValidBytesWithLength(watchValidationSchema, 32)) {
