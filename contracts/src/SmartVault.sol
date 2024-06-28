@@ -96,7 +96,10 @@ contract SmartVault is ISmartVault {
                 attesters,
                 operators,
                 thresholds,
-                claimData
+                claimData.claimType,
+                claimData.fixedAmount,
+                claimData.percentage,
+                claimData.customData
             ),
             value: 0
         });
