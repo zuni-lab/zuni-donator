@@ -8,18 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useActionDebounce } from '@/hooks/useAction';
 import { useSchemaStore } from '@/states/schema';
-import { ClaimType, isValidType } from '@/utils/claim';
+import { ClaimType, isValidType } from '@/vaults/claim';
+import { getOperatorLabel, getOperatorNumber, RuleOperators } from '@/vaults/operators';
+import { getMaxValue, isNumericType } from '@/utils/vaults/types';
 import {
-  RuleOperators,
-  getMaxValue,
-  getOperatorLabel,
-  getOperatorNumber,
   getValidationSchema,
-  isNumericType,
-  isUnsupportedRule,
   parseValidationSchema,
+  isUnsupportedRule,
   validateField,
-} from '@/utils/rule';
+} from '@/utils/vaults/schema';
+
 import { isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
 import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';

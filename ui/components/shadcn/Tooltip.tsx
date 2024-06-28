@@ -5,7 +5,26 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 import { cn } from '@/utils/shadcn';
 
-const TooltipProvider = TooltipPrimitive.Provider;
+interface TooltipProviderProps {
+  children: React.ReactNode;
+  /**
+   * The duration from when the pointer enters the trigger until the tooltip gets opened.
+   * @defaultValue 700
+   */
+  delayDuration?: number;
+  /**
+   * How much time a user has to enter another trigger without incurring a delay again.
+   * @defaultValue 300
+   */
+  skipDelayDuration?: number;
+  /**
+   * When `true`, trying to hover the content will result in the tooltip closing as the pointer leaves the trigger.
+   * @defaultValue false
+   */
+  disableHoverableContent?: boolean;
+}
+
+const TooltipProvider: React.FC<TooltipProviderProps> = TooltipPrimitive.Provider;
 
 TooltipProvider.displayName = 'Tooltip';
 

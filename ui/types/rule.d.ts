@@ -16,7 +16,15 @@ type TRuleNumericType =
   | 'uint128'
   | 'uint256';
 
-type TRuleBytesType = 'bytes1' | 'bytes2' | 'bytes4' | 'bytes8' | 'bytes16' | 'bytes32' | 'bytes';
+type TRuleBytesType =
+  | 'bytes1'
+  | 'bytes2'
+  | 'bytes3'
+  | 'bytes4'
+  | 'bytes8'
+  | 'bytes16'
+  | 'bytes32'
+  | 'bytes';
 
 type TDeclareStmt = {
   type: TRuleType;
