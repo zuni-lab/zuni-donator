@@ -1,5 +1,4 @@
 import { Heading } from '@/components/Heading';
-import { MockVaults } from '@/constants/mock';
 import { RouterMeta } from '@/constants/router';
 import { Metadata } from 'next';
 import { PageContent } from './content';
@@ -14,7 +13,7 @@ export default function ValutPage() {
         description="Explore the one that best suits your needs."
         size="md"
       />
-      <PageContent data={MockVaults} />
+      <PageContent />
     </main>
   );
 }

@@ -5,11 +5,13 @@ import { decodeAbiParameters } from 'viem';
 import { create } from 'zustand';
 
 interface IVaultState {
-  vaults: Record<string, TVault>;
+  vaults: Record<THexString, TVault>;
   loading: boolean;
   addVault: (vault: TVault) => void;
-  getVault: (uuid: string) => TVault | undefined;
-  fetchVaults: (uuid: string[], registry: SchemaRegistry, eas: EAS) => void;
+  getVault: (uuid: THexString) => TVault | undefined;
+  fetchVaults: (uuid: THexString[], registry: SchemaRegistry, eas: EAS) => void;
+  getComingVaults: (n: number) => TVault[];
+  getAllOfVaults: () => TVault[];
 }
 
 export const useVaultStore = create<IVaultState>((set, get) => ({
@@ -30,6 +32,8 @@ export const useVaultStore = create<IVaultState>((set, get) => ({
   },
   fetchVaults: async (newVaultIds, registry, eas) => {
     try {
+      set({ loading: true });
+
       const vaultIds = newVaultIds.filter((id) => !get().vaults[id]);
       if (!vaultIds.length) {
         return;
@@ -43,75 +47,85 @@ export const useVaultStore = create<IVaultState>((set, get) => ({
         throw new Error('Schema not found');
       }
 
-      let abi = splitValidationSchema(schemaRecord.schema).map((tupple) => ({
+      const abi = splitValidationSchema(schemaRecord.schema).map((tupple) => ({
         type: tupple[0],
         name: tupple[1],
       }));
 
-      console.log('ABI:', abi);
-      abi = [
-        {
-          type: 'string',
-          name: 'name',
-        },
-        {
-          type: 'string',
-          name: 'description',
-        },
-        {
-          type: 'uint256',
-          name: 'contributeStart',
-        },
-        {
-          type: 'uint256',
-          name: 'contributeEnd',
-        },
-        {
-          type: 'bytes32',
-          name: 'validationSchema',
-        },
-        {
-          type: 'uint8[]',
-          name: 'operators',
-        },
-        {
-          type: 'bytes[]',
-          name: 'thresholds',
-        },
-        {
-          type: 'uint8',
-          name: 'claimType',
-        },
-        // {
-        //   type: 'uint256',
-        //   name: 'fixedAmount',
-        // },
-        // {
-        //   type: 'uint256',
-        //   name: 'percentage',
-        // },
-        // {
-        //   type: 'bytes',
-        //   name: 'customData',
-        // },
-      ];
-
-      const vaults = await Promise.all(
-        [vaultIds[0]].map(async (vaultId) => {
-          const rsp = await eas.getAttestation(vaultId);
+      await Promise.all(
+        vaultIds.map(async (uid) => {
+          const rsp = await eas.getAttestation(uid);
           if (!rsp) {
             throw new Error('Attestation not found');
           }
-          const values = decodeAbiParameters(abi, rsp.data as `0x${string}`);
-          console.log('Values:', values);
-        })
-      ).catch((error) => {
-        console.error('Error fetching vault:', error);
-      });
+          const values = decodeAbiParameters(abi, rsp.data as THexString);
+          if (values.length !== abi.length) {
+            throw new Error('Invalid attestation');
+          }
 
-      console.log('Attestation:', vaults);
+          const validationUID = values[4] as THexString;
+
+          const sr = await registry?.getSchema({ uid: validationUID as string });
+          if (!sr || !sr.schema) {
+            throw new Error('Schema not found');
+          }
+
+          const vault: TVault = {
+            uuid: uid,
+            name: values[0] as string,
+            description: values[1] as string,
+            contributeStart: values[2] as bigint,
+            contributeEnd: values[3] as bigint,
+            validationSchemaUID: validationUID,
+            attesters: values[5] as THexString[],
+            operators: values[6] as number[],
+            thresholds: values[7] as THexString[],
+            claimType: values[8] as number,
+            fixedAmount: values[9] as bigint,
+            percentage: values[10] as bigint,
+            customData: values[11] as THexString,
+            validationSchema: sr.schema,
+          };
+          set({
+            vaults: {
+              ...get().vaults,
+              [uid]: vault,
+            },
+          });
+
+          return vault;
+        })
+      )
+        .catch((error) => {
+          console.error('Error fetching vault:', error);
+        })
+        .finally(() => {
+          set({ loading: false });
+        });
     } catch (error) {
       console.error('Error fetching vault:', error);
     }
+  },
+  getComingVaults: (n) => {
+    const vaults = Object.values(get().vaults);
+    const length = Object.keys(vaults).length;
+    if (length === 0) {
+      return [];
+    }
+
+    if (length <= n) {
+      return Object.values(get().vaults);
+    }
+
+    const sortedVaults = Object.values(get().vaults).sort(
+      (a, b) => Number(b.contributeEnd) - Number(a.contributeEnd)
+    );
+
+    return sortedVaults.slice(0, n);
+  },
+  getAllOfVaults: () => {
+    return Object.values(get().vaults).sort(
+      (a, b) => Number(b.contributeEnd) - Number(a.contributeEnd)
+    );
   },
 }));

@@ -2,59 +2,29 @@
 
 import { Button } from '@/components/shadcn/Button';
 import { Input } from '@/components/shadcn/Input';
-import { VaultCard } from '@/components/vault/VaultCard';
 import { VaultDialog } from '@/components/vault/VaultDialog';
 import { useActionDebounce } from '@/hooks/useAction';
-import { Inbox, LoaderCircle, SearchIcon } from 'lucide-react';
+import { useVaultStore } from '@/states/vault';
+import { SearchIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { VaultListSection } from '../sections/VaultListSection';
 
-export const PageContent: IComponent<{
-  data: TVault[];
-}> = ({ data }) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [selectedVaults, setSelectedVaults] = useState<TVault[]>(data);
+export const PageContent = () => {
+  const data = useVaultStore((state) => state.getAllOfVaults());
+  const isFetching = useVaultStore((state) => state.loading);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const debounce = useActionDebounce(500, true);
 
   const onSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       debounce(() => {
-        setLoading(true);
-        if (e.target.value.length === 0) {
-          setSelectedVaults(data);
-          setLoading(false);
-          return;
-        }
-        setSelectedVaults(
-          data.filter(
-            (vault) => vault.name.includes(e.target.value) || vault.uuid.includes(e.target.value)
-          )
-        );
-        setLoading(false);
+        setSearchQuery(e.target.value);
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [data, setSearchQuery]
   );
-
-  const renderVaults = useMemo(() => {
-    if (selectedVaults.length === 0) {
-      return (
-        <div className="mt-40 w-full flex justify-center items-center text-xl">
-          No vaults
-          <Inbox className="w-8 h-8 ml-2" />
-        </div>
-      );
-    }
-
-    return (
-      <div className="mt-12 w-full grid grid-cols-3 gap-8">
-        {selectedVaults.map((vault) => (
-          <VaultCard key={vault.uuid} {...vault} />
-        ))}
-      </div>
-    );
-  }, [selectedVaults]);
 
   const renderSearch = useMemo(() => {
     return (
@@ -65,15 +35,11 @@ export const PageContent: IComponent<{
           onChange={onSearch}
         />
         <Button size={'lg'} variant={'link'} className="px-2 text-white cursor-default">
-          {loading ? (
-            <LoaderCircle className="w-6 h-6 animate-spin" />
-          ) : (
-            <SearchIcon className="w-6 h-6" />
-          )}
+          <SearchIcon className="w-6 h-6" />
         </Button>
       </div>
     );
-  }, [loading, onSearch]);
+  }, [onSearch]);
 
   return (
     <section className="mt-6">
@@ -81,7 +47,9 @@ export const PageContent: IComponent<{
         <VaultDialog />
         {renderSearch}
       </div>
-      <div className="w-full flex flex-col items-center justify-center">{renderVaults}</div>
+      <div className="w-full flex flex-col items-center justify-center mt-12">
+        <VaultListSection vaults={data} loading={isFetching} query={searchQuery} />
+      </div>
     </section>
   );
 };

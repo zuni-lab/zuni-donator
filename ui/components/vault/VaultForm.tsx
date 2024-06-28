@@ -107,7 +107,13 @@ export const VaultForm: IComponent = () => {
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const { data: hash, isPending, writeContract, isSuccess } = useWriteContract();
+  const {
+    data: hash,
+    isPending,
+    writeContract,
+    isSuccess,
+    error: writeCallError,
+  } = useWriteContract();
   const [hashState, setHash] = useState('');
 
   const combinedSchema = baseFormSchema
@@ -255,7 +261,7 @@ export const VaultForm: IComponent = () => {
     }
 
     const ops: number[] = [];
-    const thresholds: `0x${string}`[] = [];
+    const thresholds: THexString[] = [];
     let isError = false;
 
     parsedRules.forEach((rule) => {
@@ -337,19 +343,21 @@ export const VaultForm: IComponent = () => {
         claimType: ClaimType.FIXED,
         fixedAmount: BigInt(parseFloat(values._zuni_smv_claimAmount) * 1e18),
         percentage: BigInt(0),
-        customData: '0x' as `0x${string}`,
+        customData: '0x' as THexString,
       };
     } else if (values._zuni_smv_claimType === 'PERCENTAGE') {
       claimData = {
         claimType: ClaimType.PERCENTAGE,
         fixedAmount: BigInt(0),
         percentage: BigInt(parseFloat(values._zuni_smv_claimPercentage) * 1e18),
-        customData: '0x' as `0x${string}`,
+        customData: '0x' as THexString,
       };
     }
 
+    const attesters: THexString[] = [];
+
     writeContract({
-      address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
+      address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
       abi: SMART_VAULT_ABI,
       functionName: 'createVault',
       args: [
@@ -357,13 +365,20 @@ export const VaultForm: IComponent = () => {
         values._zuni_smv_description,
         BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
         BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
-        values._zuni_smv_validationSchema as `0x${string}`,
+        values._zuni_smv_validationSchema as THexString,
+        attesters,
         ops,
         thresholds,
         claimData,
       ],
     });
   });
+
+  useEffect(() => {
+    if (writeCallError) {
+      console.error('Error writing contract:', writeCallError);
+    }
+  }, [writeCallError]);
 
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({
     hash,

@@ -20,6 +20,7 @@ export const useRpcProvider = (rpcUrl: string) => {
       newProvider?.websocket.close();
     };
     return newProvider;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rpcUrl, reconnectTrigger, reconnect]);
 
   useEffect(() => {

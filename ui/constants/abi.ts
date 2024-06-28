@@ -25,7 +25,7 @@ export const SMART_VAULT_ABI = [
     inputs: [
       { indexed: true, internalType: 'bytes32', name: 'vaultId', type: 'bytes32' },
       { indexed: true, internalType: 'bytes32', name: 'validatedAttestion', type: 'bytes32' },
-      { indexed: false, internalType: 'bytes32', name: 'claimAttestation', type: 'bytes32' },
+      { indexed: true, internalType: 'bytes32', name: 'claimAttestation', type: 'bytes32' },
       { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
     ],
     name: 'Claim',
@@ -36,7 +36,7 @@ export const SMART_VAULT_ABI = [
     inputs: [
       { indexed: true, internalType: 'bytes32', name: 'vaultId', type: 'bytes32' },
       { indexed: true, internalType: 'address', name: 'contributor', type: 'address' },
-      { indexed: false, internalType: 'bytes32', name: 'contributionAttestation', type: 'bytes32' },
+      { indexed: true, internalType: 'bytes32', name: 'contributionAttestation', type: 'bytes32' },
       { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
     ],
     name: 'Contribute',
@@ -86,6 +86,7 @@ export const SMART_VAULT_ABI = [
       { internalType: 'uint256', name: 'contributeStart', type: 'uint256' },
       { internalType: 'uint256', name: 'contributeEnd', type: 'uint256' },
       { internalType: 'bytes32', name: 'validationSchema', type: 'bytes32' },
+      { internalType: 'address[]', name: 'attesters', type: 'address[]' },
       { internalType: 'enum Operator[]', name: 'operators', type: 'uint8[]' },
       { internalType: 'bytes[]', name: 'thresholds', type: 'bytes[]' },
       {

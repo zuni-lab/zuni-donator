@@ -15,7 +15,7 @@ export const useListenVaults = (contractAddress: string, contractAbi: any) => {
   const { eas, error: easError } = useEAS(ProjectENV.NEXT_PUBLIC_EAS_ADDRESS);
 
   const { fetchVaults } = useVaultStore();
-  const [vaultIds, setVaultIds] = useState<string[]>([]);
+  const [vaultIds, setVaultIds] = useState<THexString[]>([]);
 
   const fetchPastEvents = useCallback(
     async (provider: ethers.WebSocketProvider) => {
@@ -57,8 +57,7 @@ export const useListenVaults = (contractAddress: string, contractAbi: any) => {
     [contractAddress, contractAbi, setVaultIds]
   );
 
-  const handleCreateVaultEvent = useCallback((vaultId: string) => {
-    console.log('New vault created with ID:', vaultId);
+  const handleCreateVaultEvent = useCallback((vaultId: THexString) => {
     setVaultIds((prev) => [...new Set([...prev, vaultId])]);
   }, []);
 

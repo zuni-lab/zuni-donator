@@ -4,8 +4,8 @@ import { AppRouter, RouterMeta } from '@/constants/router';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { AboutSection } from './sections/AboutSection';
-import { CommingSoonVaultSection } from './sections/CommingSoonVaultSection';
 import { StatSection } from './sections/StatSection';
+import { RecentVaultSection } from './sections/RecentVaultSection';
 
 export const metadata: Metadata = RouterMeta.Home;
 
@@ -25,7 +25,7 @@ export default function HomePage() {
       </div>
       <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div>
       <AboutSection />
-      <CommingSoonVaultSection />
+      <RecentVaultSection />
       <StatSection />
     </main>
   );
