@@ -21,15 +21,15 @@ type TVault = {
   uuid: THexString;
   name: string;
   description: string;
-  contributeStart: bigint;
-  contributeEnd: bigint;
+  contributeStart: number;
+  contributeEnd: number;
   validationSchemaUID: THexString; // Schema UID
   attesters: THexString[];
   operators: number[];
   thresholds: THexString[];
   claimType: number;
-  fixedAmount: bigint;
-  percentage: bigint;
+  fixedAmount: number;
+  percentage: number;
   customData: THexString;
   validationSchema: string;
 };
