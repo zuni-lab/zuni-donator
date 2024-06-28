@@ -8,3 +8,14 @@ export const ClaimType: {
 export const isValidType = (type: string): boolean => {
   return type === 'FIXED' || type === 'PERCENTAGE';
 };
+
+export const getClaimType = (n: number) => {
+  switch (n) {
+    case ClaimType.FIXED:
+      return 'FIXED';
+    case ClaimType.PERCENTAGE:
+      return 'PERCENTAGE';
+    default:
+      return 'FIXED';
+  }
+};

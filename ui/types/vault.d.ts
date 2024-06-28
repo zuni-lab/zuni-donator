@@ -15,17 +15,21 @@
  * CustomData: bytes
  */
 
+type THexString = `0x${string}`;
+
 type TVault = {
-  uuid: string;
+  uuid: THexString;
   name: string;
   description: string;
-  contributeStart: number;
-  contributeEnd: number;
-  validationSchema: string;
+  contributeStart: bigint;
+  contributeEnd: bigint;
+  validationSchemaUID: THexString; // Schema UID
+  attesters: THexString[];
   operators: number[];
-  thresholds: string[];
+  thresholds: THexString[];
   claimType: number;
-  fixedAmount: number;
-  percentage: number;
-  customData: string;
+  fixedAmount: bigint;
+  percentage: bigint;
+  customData: THexString;
+  validationSchema: string;
 };

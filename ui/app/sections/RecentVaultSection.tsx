@@ -1,20 +1,18 @@
+'use client';
+
 import { Button } from '@/components/shadcn/Button';
-import { VaultCard } from '@/components/vault/VaultCard';
-import { MockVaults } from '@/constants/mock';
+import { useVaultStore } from '@/states/vault';
 import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
+import { VaultListSection } from './VaultListSection';
 
-// TODO: fetch onchain data
-
-export const CommingSoonVaultSection: IComponent = () => {
+export const RecentVaultSection: IComponent = () => {
+  const vaults = useVaultStore((state) => state.getComingVaults(6));
+  const loading = useVaultStore((state) => state.loading);
   return (
     <section className="mt-8">
       <h1 className="title">Recent Vaults</h1>
-      <div className="mt-4 w-full grid grid-cols-3 gap-8">
-        {MockVaults.slice(0, 6).map((vault) => (
-          <VaultCard key={vault.uuid} {...vault} />
-        ))}
-      </div>
+      <VaultListSection vaults={vaults} loading={loading} />
       <div className="flex justify-end mt-2">
         <Link href="/vaults" passHref legacyBehavior>
           <Button className="mt-4 flex gap-2 items-center text-base" variant={'link'}>

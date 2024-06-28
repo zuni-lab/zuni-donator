@@ -19,7 +19,7 @@ export const getFormattedTimeAndDate = (inputDate: string | number) => {
 // HH, DD/MM/YYYY
 export const getFormattedDate = (inputDate: string | number) => {
   const date = moment(inputDate);
-  const formattedDate = date.format('DD/MM/YYYY');
+  const formattedDate = date.format('DD-MM-YYYY');
   return date.isValid() ? formattedDate : 'Never';
 };
 
