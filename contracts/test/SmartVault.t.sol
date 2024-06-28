@@ -56,6 +56,8 @@ contract SmartVaultTest is Test {
 
         ClaimData memory claimData = ClaimData(ClaimType.FIXED, 100, 0, "");
 
+        address[] memory attesters = new address[](0);
+
         vm.expectEmit(false, true, true, true, address(smartVault));
         emit ISmartVault.CreateVault(DONT_CARE_BYTES32);
         bytes32 vaultId = smartVault.createVault(
@@ -64,6 +66,7 @@ contract SmartVaultTest is Test {
             block.timestamp,
             block.timestamp + 2000,
             validationSchema,
+            attesters,
             ops,
             thresholds,
             claimData
@@ -104,12 +107,15 @@ contract SmartVaultTest is Test {
 
         ClaimData memory claimData = ClaimData(ClaimType.FIXED, 100, 0, "");
 
+        address[] memory attesters = new address[](0);
+
         bytes32 vaultId = smartVault.createVault(
             "My Vault",
             "This is a test vault",
             block.timestamp - 1,
             block.timestamp + 2000,
             validationSchema,
+            attesters,
             ops,
             thresholds,
             claimData
@@ -152,14 +158,15 @@ contract SmartVaultTest is Test {
 
         ClaimData memory claimData = ClaimData(ClaimType.FIXED, 100, 0, "");
 
-        vm.expectEmit(false, true, true, true, address(smartVault));
-        emit ISmartVault.CreateVault(DONT_CARE_BYTES32);
+        address[] memory attesters = new address[](0);
+
         bytes32 vaultId = smartVault.createVault(
             "My Vault",
             "This is a test vault",
             block.timestamp - 1,
             block.timestamp + 2000,
             validationSchema,
+            attesters,
             ops,
             thresholds,
             claimData

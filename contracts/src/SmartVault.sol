@@ -38,6 +38,7 @@ contract SmartVault is ISmartVault {
         uint256 contributeStart,
         uint256 contributeEnd,
         bytes32 validationSchema,
+        address[] memory attesters,
         Operator[] memory operators,
         bytes[] memory thresholds,
         ClaimData memory claimData
@@ -87,13 +88,21 @@ contract SmartVault is ISmartVault {
             revocable: false,
             refUID: EMPTY_UID,
             data: abi.encode(
-                name, description, contributeStart, contributeEnd, validationSchema, operators, thresholds, claimData
+                name,
+                description,
+                contributeStart,
+                contributeEnd,
+                validationSchema,
+                attesters,
+                operators,
+                thresholds,
+                claimData
             ),
             value: 0
         });
         bytes32 vaultId = _eas.attest(AttestationRequest({ schema: vaultSchema, data: data }));
 
-        _rules[vaultId] = Rules(types, operators, thresholds, claimData);
+        _rules[vaultId] = Rules(attesters, types, operators, thresholds, claimData);
 
         emit CreateVault(vaultId);
 
@@ -160,158 +169,11 @@ contract SmartVault is ISmartVault {
             revert Claimed();
         }
 
-        bytes memory validationData = validationAttestation.data;
-        Rules memory rule = _rules[vaultId];
+        Rules memory rules = _rules[vaultId];
 
-        bytes32 pointer;
-        assembly {
-            validationData := add(validationData, 0x20)
-            pointer := validationData
-        }
-        for (uint256 i = 0; i < rule.types.length; i++) {
-            if (rule.types[i] == Type.BYTES1) {
-                bytes1 value;
-                bytes1 threshold = abi.decode(rule.thresholds[i], (bytes1));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES2) {
-                bytes2 value;
-                bytes2 threshold = abi.decode(rule.thresholds[i], (bytes2));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES3) {
-                bytes3 value;
-                bytes3 threshold = abi.decode(rule.thresholds[i], (bytes3));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES4) {
-                bytes4 value;
-                bytes4 threshold = abi.decode(rule.thresholds[i], (bytes4));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES8) {
-                bytes8 value;
-                bytes8 threshold = abi.decode(rule.thresholds[i], (bytes8));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES16) {
-                bytes16 value;
-                bytes16 threshold = abi.decode(rule.thresholds[i], (bytes16));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES32) {
-                bytes32 value;
-                bytes32 threshold = abi.decode(rule.thresholds[i], (bytes32));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes32(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT8) {
-                int8 value;
-                int8 threshold = abi.decode(rule.thresholds[i], (int8));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT16) {
-                int16 value;
-                int16 threshold = abi.decode(rule.thresholds[i], (int16));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT24) {
-                int24 value;
-                int24 threshold = abi.decode(rule.thresholds[i], (int24));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT32) {
-                int32 value;
-                int32 threshold = abi.decode(rule.thresholds[i], (int32));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT64) {
-                int64 value;
-                int64 threshold = abi.decode(rule.thresholds[i], (int64));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT128) {
-                int128 value;
-                int128 threshold = abi.decode(rule.thresholds[i], (int128));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.INT256) {
-                int256 value;
-                int256 threshold = abi.decode(rule.thresholds[i], (int256));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkInt256(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.ADDRESS) {
-                address value;
-                address threshold = abi.decode(rule.thresholds[i], (address));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkAddress(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BOOL) {
-                bool value;
-                bool threshold = abi.decode(rule.thresholds[i], (bool));
-                assembly {
-                    value := mload(validationData)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBool(rule.operators[i], value, threshold);
-            } else if (rule.types[i] == Type.BYTES || rule.types[i] == Type.STRING) {
-                bytes memory value;
-                bytes memory threshold = abi.decode(rule.thresholds[i], (bytes));
-                assembly {
-                    let offset := mload(validationData)
-                    value := add(offset, pointer)
-                    validationData := add(validationData, 0x20)
-                }
-                _checkBytes(rule.operators[i], value, threshold);
-            } else {
-                require(rule.operators[i] == Operator.NONE, "SmartVault: can not compare unsupported type");
-            }
-        }
+        _validateRules(rules, validationAttestation.attester, validationAttestation.data);
 
-        ClaimData memory claimData = rule.claimData;
+        ClaimData memory claimData = rules.claimData;
         uint256 claimAmount;
         if (claimData.claimType == ClaimType.FIXED) {
             claimAmount = claimData.fixedAmount;
@@ -447,5 +309,166 @@ contract SmartVault is ISmartVault {
 
     function _getClaimId(bytes32 vaultId, bytes32 attestionUID) private pure returns (bytes32) {
         return keccak256(abi.encode(vaultId, attestionUID));
+    }
+
+    function _validateRules(Rules memory rules, address attester, bytes memory validationData) private pure {
+        if (rules.attesters.length != 0) {
+            bool existed = false;
+            for (uint256 i = 0; i < rules.attesters.length; i++) {
+                if (rules.attesters[i] == attester) {
+                    existed = true;
+                    break;
+                }
+            }
+            require(existed, "SmartVault: attester not allowed");
+        }
+
+        bytes32 pointer;
+        assembly {
+            validationData := add(validationData, 0x20)
+            pointer := validationData
+        }
+        for (uint256 i = 0; i < rules.types.length; i++) {
+            if (rules.types[i] == Type.BYTES1) {
+                bytes1 value;
+                bytes1 threshold = abi.decode(rules.thresholds[i], (bytes1));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES2) {
+                bytes2 value;
+                bytes2 threshold = abi.decode(rules.thresholds[i], (bytes2));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES3) {
+                bytes3 value;
+                bytes3 threshold = abi.decode(rules.thresholds[i], (bytes3));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES4) {
+                bytes4 value;
+                bytes4 threshold = abi.decode(rules.thresholds[i], (bytes4));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES8) {
+                bytes8 value;
+                bytes8 threshold = abi.decode(rules.thresholds[i], (bytes8));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES16) {
+                bytes16 value;
+                bytes16 threshold = abi.decode(rules.thresholds[i], (bytes16));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES32) {
+                bytes32 value;
+                bytes32 threshold = abi.decode(rules.thresholds[i], (bytes32));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes32(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT8) {
+                int8 value;
+                int8 threshold = abi.decode(rules.thresholds[i], (int8));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT16) {
+                int16 value;
+                int16 threshold = abi.decode(rules.thresholds[i], (int16));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT24) {
+                int24 value;
+                int24 threshold = abi.decode(rules.thresholds[i], (int24));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT32) {
+                int32 value;
+                int32 threshold = abi.decode(rules.thresholds[i], (int32));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT64) {
+                int64 value;
+                int64 threshold = abi.decode(rules.thresholds[i], (int64));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT128) {
+                int128 value;
+                int128 threshold = abi.decode(rules.thresholds[i], (int128));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.INT256) {
+                int256 value;
+                int256 threshold = abi.decode(rules.thresholds[i], (int256));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkInt256(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.ADDRESS) {
+                address value;
+                address threshold = abi.decode(rules.thresholds[i], (address));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkAddress(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BOOL) {
+                bool value;
+                bool threshold = abi.decode(rules.thresholds[i], (bool));
+                assembly {
+                    value := mload(validationData)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBool(rules.operators[i], value, threshold);
+            } else if (rules.types[i] == Type.BYTES || rules.types[i] == Type.STRING) {
+                bytes memory value;
+                bytes memory threshold = abi.decode(rules.thresholds[i], (bytes));
+                assembly {
+                    let offset := mload(validationData)
+                    value := add(offset, pointer)
+                    validationData := add(validationData, 0x20)
+                }
+                _checkBytes(rules.operators[i], value, threshold);
+            } else {
+                require(rules.operators[i] == Operator.NONE, "SmartVault: can not compare unsupported type");
+            }
+        }
     }
 }
