@@ -1,5 +1,5 @@
 import { StatusPhase } from './status';
-import { TableTxs } from './tsx';
+import { TableTxs } from './txs';
 
 export default function Detail() {
   return (

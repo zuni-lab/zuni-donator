@@ -33,5 +33,7 @@ export const useRpcProvider = (rpcUrl: string) => {
 };
 
 export const useAlchemyProvider = () => {
-  return useRpcProvider(ProjectENV.NEXT_PUBLIC_ALCHEMY_RPC_URL);
+  return useRpcProvider(
+    `wss://base-sepolia.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+  );
 };
