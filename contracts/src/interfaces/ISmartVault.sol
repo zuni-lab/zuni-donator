@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import { ClaimData, Operator, Type } from "../Common.sol";
 
 struct Rules {
+    address[] attesters;
     Type[] types;
     Operator[] operators;
     bytes[] thresholds;
@@ -76,6 +77,7 @@ interface ISmartVault {
         uint256 contributeStart,
         uint256 contributeEnd,
         bytes32 validationSchema,
+        address[] memory attesters,
         Operator[] memory ops,
         bytes[] memory thresholds,
         ClaimData memory claimData

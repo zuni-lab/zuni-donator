@@ -22,7 +22,7 @@ contract DeploySmartVault is BaseScript {
 
         // solhint-disable max-line-length
         bytes32 vaultSchema = schemaRegistry.register(
-            "string name,string description,uint256 contributeStart,uint256 contributeEnd,bytes32 validationSchema,uint8[] operators,bytes[] thresholds,uint8 claimType,uint256 fixedAmount,uint256 percentage,bytes customData",
+            "string name,string description,uint256 contributeStart,uint256 contributeEnd,bytes32 validationSchema,address[] attesters,uint8[] operators,bytes[] thresholds,uint8 claimType,uint256 fixedAmount,uint256 percentage,bytes customData",
             vaultResolver,
             false
         );
