@@ -7,31 +7,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useActionDebounce } from '@/hooks/useAction';
-import { useSchemaStore } from '@/states/schema';
-import { ClaimType, isValidType } from '@/vaults/claim';
-import { getOperatorLabel, getOperatorNumber, RuleOperators } from '@/vaults/operators';
-import { getMaxValue, isNumericType } from '@/utils/vaults/types';
 import {
   getValidationSchema,
-  parseValidationSchema,
   isUnsupportedRule,
+  parseValidationSchema,
   validateField,
 } from '@/utils/vaults/schema';
+import { getMaxValue, isNumericType } from '@/utils/vaults/types';
+import { ClaimType, isValidType } from '@/vaults/claim';
+import { RuleOperators, getOperatorLabel, getOperatorNumber } from '@/vaults/operators';
 
 import { isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
 import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cx } from 'class-variance-authority';
 import { Loader, ShieldBan, ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
 import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-import { baseSepolia } from 'wagmi/chains';
 
+import { useSchemaRegistry } from '@/hooks/useSchemaRegisty';
 import { z } from 'zod';
 import { TooltipWrapper } from '../TooltipWrapper';
+import { TxDialog } from './TxDialog';
 
 const now = new Date().getTime(); // Current time in milliseconds
 const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
@@ -100,13 +99,16 @@ const genDefaultValues = (rules: TRule[]) => {
 };
 
 export const VaultForm: IComponent = () => {
-  const { registry } = useSchemaStore();
+  const { registry, error } = useSchemaRegistry(
+    ProjectENV.NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS
+  );
   const debounce = useActionDebounce(1000, true);
 
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { data: hash, isPending, writeContract, isSuccess } = useWriteContract();
+  const [hashState, setHash] = useState('');
 
   const combinedSchema = baseFormSchema
     .extend(dynamicSchema.shape)
@@ -192,9 +194,15 @@ export const VaultForm: IComponent = () => {
   }, [parsedRules, form]);
 
   useEffect(() => {
+    if (error) {
+      console.error('Error fetching schema registry:', error);
+      return;
+    }
+
     if (!registry) {
       return;
     }
+
     debounce(async () => {
       setLoading(true);
       if (!isValidBytesWithLength(watchValidationSchema, 32)) {
@@ -233,14 +241,12 @@ export const VaultForm: IComponent = () => {
   }, [watchValidationSchema, registry, reset]);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && hash) {
       form.reset();
       reset();
+      setHash(hash as string);
     }
-  }, [isSuccess, form, reset]);
-
-  console.log({ currentFormState: form.getValues() });
-  console.log({ formErrors: form.formState.errors });
+  }, [isSuccess, form, reset, hash, setHash]);
 
   const handlePressSubmit = handleSubmit((values) => {
     if (parsedRules.length === 0) {
@@ -341,19 +347,6 @@ export const VaultForm: IComponent = () => {
         customData: '0x' as `0x${string}`,
       };
     }
-
-    console.log({
-      args: [
-        values._zuni_smv_name,
-        values._zuni_smv_description,
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
-        values._zuni_smv_validationSchema as `0x${string}`,
-        ops,
-        thresholds,
-        claimData,
-      ],
-    });
 
     writeContract({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
@@ -686,19 +679,7 @@ export const VaultForm: IComponent = () => {
             Error: {(error as BaseError).shortMessage || error.message}
           </div>
         )} */}
-        {hash && (
-          <div className="text-gray-700 text-sm flex flex-col">
-            Transaction ID:
-            <Link
-              href={`${baseSepolia.blockExplorers.default.url}/tx/${hash}`}
-              passHref
-              legacyBehavior>
-              <a target="_blank" className="text-blue-600 underline text-xs">
-                {hash}
-              </a>
-            </Link>
-          </div>
-        )}
+        {<TxDialog hash={hashState as string} onClose={() => setHash('')} />}
         {/* {isConfirming && <div>Waiting for confirmation...</div>} */}
         {/* {isConfirmed && <div>Transaction confirmed.</div>} */}
       </form>

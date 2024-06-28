@@ -4,18 +4,13 @@ import { injectStyle } from 'react-toastify/dist/inject-style';
 
 import { Footer } from '@/components/Footer';
 import { Navigation } from '@/components/Navigation';
-import { useBaseSepoliaSigner } from '@/hooks/useWagmi';
-import { useSchemaStore } from '@/states/schema';
+import { SMART_VAULT_ABI } from '@/constants/abi';
+import { useListenVaults } from '@/hooks/useListenVault';
 import { ProjectENV } from '@env';
 import { Authentication } from './Authentication';
 
 export const WrapperClientLayout: IComponent = ({ children }) => {
-  const { loadSchemaRegistry } = useSchemaStore();
-  const provider = useBaseSepoliaSigner();
-  useEffect(() => {
-    if (!provider) return;
-    loadSchemaRegistry(ProjectENV.NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS, provider);
-  }, [loadSchemaRegistry, provider]);
+  useListenVaults(ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS, SMART_VAULT_ABI);
 
   useEffect(() => {
     injectStyle();

@@ -136,6 +136,19 @@ export const validateField = (type: TRuleType, value: string): [boolean, string]
   return [true, ''];
 };
 
+export const splitValidationSchema = (schema: string): [string, string][] => {
+  schema = schema.replace(/"/g, '');
+  const lit = schema.split(',');
+  if (lit.length == 0) {
+    return [];
+  }
+
+  return lit.map((l) => {
+    const [type, name] = l.trim().split(' ');
+    return [type, name];
+  });
+};
+
 export const parseValidationSchema = (schema: string): TRule[] => {
   schema = schema.replace(/"/g, '');
   const lit = schema.split(',');
