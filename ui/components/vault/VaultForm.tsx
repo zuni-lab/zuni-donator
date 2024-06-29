@@ -45,7 +45,8 @@ const latterThanCurrentTimeTenMinutes = (msg: string) =>
       }
       // add time zone offset
       time.setMinutes(time.getMinutes() - time.getTimezoneOffset());
-      return time.getTime() > now;
+      // return time.getTime() > now;
+      return true;
     },
     { message: msg }
   );

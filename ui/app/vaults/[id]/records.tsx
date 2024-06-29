@@ -9,8 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/shadcn/Table';
-import { useEffect, useState } from 'react';
-import { usePublicClient } from 'wagmi';
+import { useCallback, useEffect, useState } from 'react';
+import { usePublicClient, useWatchContractEvent } from 'wagmi';
 import { wagmiConfig } from '@/utils/wagmi';
 import { SMART_VAULT_ABI } from '@/constants/abi';
 import { ProjectENV } from '@env';
@@ -20,7 +20,7 @@ type Contribution = {
   txHash: `0x${string}`;
   contributor: `0x${string}`;
   attestation: `0x${string}`;
-  time: bigint;
+  time: Date;
   amount: bigint;
 };
 
@@ -28,7 +28,7 @@ type Claim = {
   txHash: `0x${string}`;
   validation: `0x${string}`;
   attestation: `0x${string}`;
-  time: bigint;
+  time: Date;
   amount: bigint;
 };
 
@@ -41,48 +41,30 @@ export const TableTxs: IComponent<{
   const publicClient = usePublicClient({ config: wagmiConfig });
   const [records, setRecords] = useState<Record[]>([]);
 
-  useEffect(() => {
-    if (!publicClient) return;
+  const convertBlockNumberToTime = (blockNumber: bigint) => {
+    const blockRef = 11800000;
+    const timeAtBlockRef = 1719368288000;
+    const timePerBlock = 2000;
+    return new Date((Number(blockNumber) - blockRef) * timePerBlock + timeAtBlockRef);
+  };
 
-    let unwatch;
-    if (recordType === 'Contribute') {
-      fetchContributionList();
+  useWatchContractEvent({
+    address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
+    abi: SMART_VAULT_ABI,
+    eventName: recordType === 'Contribute' ? 'Contribute' : 'Claim',
+    args: {
+      vaultId,
+    },
+    onLogs: () => {
+      if (recordType === 'Contribute') {
+        fetchContributionList();
+      } else {
+        fetchClaimList();
+      }
+    },
+  });
 
-      unwatch = publicClient.watchContractEvent({
-        address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
-        abi: SMART_VAULT_ABI,
-        eventName: 'Contribute',
-        args: {
-          vaultId,
-        },
-        onLogs: (logs) => {
-          console.log('deposit logs', logs);
-          fetchContributionList();
-        },
-      });
-    } else {
-      fetchClaimList();
-
-      unwatch = publicClient.watchContractEvent({
-        address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
-        abi: SMART_VAULT_ABI,
-        eventName: 'Claim',
-        args: {
-          vaultId,
-        },
-        onLogs: (logs) => {
-          console.log('claim logs:', logs);
-          fetchClaimList();
-        },
-      });
-    }
-
-    unwatch();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchContributionList = async () => {
+  const fetchContributionList = useCallback(async () => {
     const events = await publicClient.getContractEvents({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
       abi: SMART_VAULT_ABI,
@@ -98,14 +80,15 @@ export const TableTxs: IComponent<{
         txHash: event.transactionHash as `0x${string}`,
         contributor: event.args.contributor as `0x${string}`,
         attestation: event.args.contributionAttestation as `0x${string}`,
-        time: event.blockNumber as bigint,
+        time: convertBlockNumberToTime(event.blockNumber),
         amount: event.args.amount as bigint,
       };
     });
+    data.reverse();
     setRecords([...data]);
-  };
+  }, [publicClient, vaultId]);
 
-  const fetchClaimList = async () => {
+  const fetchClaimList = useCallback(async () => {
     const events = await publicClient.getContractEvents({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as `0x${string}`,
       abi: SMART_VAULT_ABI,
@@ -121,16 +104,27 @@ export const TableTxs: IComponent<{
         txHash: event.transactionHash as `0x${string}`,
         validation: event.args.validatedAttestion as `0x${string}`,
         attestation: event.args.claimAttestation as `0x${string}`,
-        time: event.blockNumber as bigint,
+        time: convertBlockNumberToTime(event.blockNumber),
         amount: event.args.amount as bigint,
       };
     });
+    data.reverse();
     setRecords([...data]);
-  };
+  }, [publicClient, vaultId]);
+
+  useEffect(() => {
+    if (recordType === 'Contribute') {
+      fetchContributionList();
+    } else {
+      fetchClaimList();
+    }
+  }, [recordType, fetchContributionList, fetchClaimList]);
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">List of contributors</h1>
+      <h1 className="text-2xl font-bold">
+        {recordType === 'Contribute' ? 'List of contributors' : 'List of claimers'}
+      </h1>
       <Table>
         <TableCaption>Contribution Records</TableCaption>
         <TableHeader>
@@ -138,7 +132,7 @@ export const TableTxs: IComponent<{
             <TableHead>Tx Hash</TableHead>
             <TableHead>{recordType === 'Contribute' ? 'Contributor' : 'Validation UID'}</TableHead>
             <TableHead>Attestation</TableHead>
-            <TableHead className="w-[300px]">
+            <TableHead className="text-right">
               {recordType === 'Contribute' ? 'Contribute At' : 'Claim At'}
             </TableHead>
             <TableHead className="text-right">Amount</TableHead>
@@ -154,7 +148,7 @@ export const TableTxs: IComponent<{
                   : (record as Claim).validation}
               </TableCell>
               <TableCell>{record.attestation}</TableCell>
-              <TableCell className="w-[300px]">{Number(record.time)}</TableCell>
+              <TableCell className="text-right">{record.time.toLocaleString()}</TableCell>
               <TableCell className="text-right">{formatEther(record.amount)} ETH</TableCell>
             </TableRow>
           ))}
