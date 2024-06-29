@@ -3,15 +3,23 @@
 import { Button } from '@/components/shadcn/Button';
 import { Input } from '@/components/shadcn/Input';
 import { CreateVaultMode, VaultDialog } from '@/components/vault/VaultDialog';
+import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useActionDebounce } from '@/hooks/useAction';
+import { useEAS } from '@/hooks/useEas';
+import { useSchemaRegistry } from '@/hooks/useSchemaRegisty';
 import { useVaultStore } from '@/states/vault';
+import { ProjectENV } from '@env';
 import { SearchIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useWatchContractEvent } from 'wagmi';
 import { VaultListSection } from '../sections/VaultListSection';
 
 export const PageContent = () => {
   const data = useVaultStore((state) => state.getAllOfVaults());
+  const fetchVaults = useVaultStore((state) => state.fetchVaults);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const { registry } = useSchemaRegistry();
+  const { eas } = useEAS();
 
   const debounce = useActionDebounce(500, true);
 
@@ -39,6 +47,19 @@ export const PageContent = () => {
       </div>
     );
   }, [onSearch]);
+
+  useWatchContractEvent({
+    address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
+    abi: SMART_VAULT_ABI,
+    eventName: 'CreateVault',
+    onLogs(logs) {
+      const vaultId = logs[0].args.vaultId;
+      if (vaultId) {
+        // TODO : check if registry and eas are available
+        fetchVaults([vaultId], registry, eas);
+      }
+    },
+  });
 
   return (
     <section className="mt-6">

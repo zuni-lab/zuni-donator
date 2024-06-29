@@ -55,12 +55,12 @@ export const VaultCard: IComponent<TVault> = ({
             {claimType === ClaimType.FIXED ? (
               <>
                 <span className="text-white">Fixed Amount</span>
-                <span className="text-blue-500">{Number(fixedAmount) / 1e18} ETH</span>
+                <span className="text-blue-500 text-right">{Number(fixedAmount) / 1e18} ETH</span>
               </>
             ) : (
               <>
                 <span className="text-white">Percentage</span>
-                <span className="text-blue-500">{Number(percentage) / 1e18}%</span>
+                <span className="text-blue-500 text-right">{Number(percentage) / 1e18}%</span>
               </>
             )}
           </div>
@@ -78,41 +78,54 @@ export const VaultCard: IComponent<TVault> = ({
             </a>
           </Link>
         </div>
-        <div className="flex flex-wrap gap-2 text-white">
-          <span className="grow">Constraint</span>
-          <span className="w-1/5 text-right">Operator</span>
-          <span className="w-1/3 text-right col-span-2">Threshold</span>
+        <div className="!mt-4 py-4 min-h-[200px]">
+          <div className="flex flex-wrap gap-2 text-white">
+            <span className="grow">Constraint</span>
+            <span className="w-1/4 text-right">Operator</span>
+            <span className="w-1/3 text-right col-span-2">Threshold</span>
+          </div>
+          {splittedValidationSchema.slice(0, 3).map(([type, name], index) => {
+            const operator = operators[index];
+            const isNoneOperator = operator === RuleOperators.NONE[0];
+            let thresholdValue = '-';
+            if (!isNoneOperator) {
+              const type = splittedValidationSchema[index][0];
+              const abi = [
+                {
+                  type: type,
+                  value: thresholds[index],
+                },
+              ];
+              const value = decodeAbiParameters(abi, thresholds[index])[0] as string;
+              thresholdValue = isValidAddress(value)
+                ? value.slice(0, 4) + '...' + value.slice(-2)
+                : value;
+            }
+            return (
+              <div key={index} className="mt-4 flex flex-wrap gap-2 text-xs items-center">
+                <span className="max-w-[120px] grow flex flex-col line-clamp-1">
+                  <span className="text-white">{type}</span>
+                  <span className="text-gray-400 max-w-full line-clamp-1">
+                    {name.length > 16 ? name.slice(0, 6) + '...' + name.slice(-6) : name}
+                  </span>
+                </span>
+                <span className="w-1/4 text-gray-400 text-right">
+                  {getOperator(operator) || `Unknown Operator ${operator}`}
+                </span>
+                <span className="w-1/3 text-gray-400 line-clamp-1 text-right">
+                  {thresholdValue}
+                </span>
+              </div>
+            );
+          })}
+          <span>
+            {splittedValidationSchema.length > 3 && (
+              <span className="text-primary text-xs">
+                +{splittedValidationSchema.length - 3} more
+              </span>
+            )}
+          </span>
         </div>
-        {splittedValidationSchema.slice(0, 6).map(([type, name], index) => {
-          const operator = operators[index];
-          const isNoneOperator = operator === RuleOperators.NONE[0];
-          let thresholdValue = '-';
-          if (!isNoneOperator) {
-            const type = splittedValidationSchema[index][0];
-            const abi = [
-              {
-                type: type,
-                value: thresholds[index],
-              },
-            ];
-            const value = decodeAbiParameters(abi, thresholds[index])[0] as string;
-            thresholdValue = isValidAddress(value)
-              ? value.slice(0, 4) + '...' + value.slice(-2)
-              : value;
-          }
-          return (
-            <div key={index} className="flex flex-wrap gap-2 text-xs items-center">
-              <span className="max-w-[120px] grow flex flex-col line-clamp-1">
-                <span className="text-white">{type}</span>
-                <span className="text-gray-400 max-w-full line-clamp-1">{name}</span>
-              </span>
-              <span className="w-1/5 text-gray-400 text-right">
-                {getOperator(operator) || `Unknown Operator ${operator}`}
-              </span>
-              <span className="w-1/3 text-gray-400 line-clamp-1 text-right">{thresholdValue}</span>
-            </div>
-          );
-        })}
       </div>
     </CardContainer>
   );

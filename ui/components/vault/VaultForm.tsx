@@ -111,9 +111,7 @@ const genDefaultValues = (rules: TRule[]) => {
 };
 
 export const VaultForm: IComponent = () => {
-  const { registry, error } = useSchemaRegistry(
-    ProjectENV.NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS
-  );
+  const { registry, error } = useSchemaRegistry();
   const debounce = useActionDebounce(1000, true);
 
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
