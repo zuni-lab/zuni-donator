@@ -17,13 +17,13 @@ import { getMaxValue, isNumericType } from '@/utils/vaults/types';
 import { ClaimType, isValidType } from '@/vaults/claim';
 import { RuleOperators, getOperatorLabel, getOperatorNumber } from '@/vaults/operators';
 
-import { isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
+import { isValidAddress, isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
 import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cx } from 'class-variance-authority';
-import { Loader, ShieldBan, ShieldCheck } from 'lucide-react';
+import { Loader, ShieldBan, ShieldCheck, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
 import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
@@ -34,6 +34,7 @@ import { TxDialog } from './TxDialog';
 
 const now = new Date().getTime(); // Current time in milliseconds
 const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
+const EMPTY_HEX_DATA = encodeAbiParameters([{ type: 'bytes' }], ['0x00']);
 
 const latterThanCurrentTimeTenMinutes = (msg: string) =>
   z.string().refine(
@@ -73,6 +74,15 @@ const baseFormSchema = z.object({
     .refine((val) => isValidBytesWithLength(val, 32), {
       message: 'Validation schema must be a valid bytes string, eg. 0x3a2fa...80a42',
     }),
+  _zuni_smv_attesters: z
+    .array(
+      z.string().refine((val) => isValidAddress(val), {
+        message: 'Invalid attester address',
+      })
+    )
+    .min(1, {
+      message: 'At least one attester is required',
+    }),
 });
 
 const baseDefaultValues = {
@@ -84,6 +94,7 @@ const baseDefaultValues = {
   _zuni_smv_claimAmount: '',
   _zuni_smv_claimPercentage: '',
   _zuni_smv_validationSchema: '',
+  _zuni_smv_attesters: [] as string[],
 };
 
 const genDefaultValues = (rules: TRule[]) => {
@@ -171,6 +182,22 @@ export const VaultForm: IComponent = () => {
   });
 
   const { control, handleSubmit, watch } = form;
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: '_zuni_smv_attesters' as never,
+    keyName: 'key',
+  });
+
+  const handleAddAttester = useCallback(() => {
+    append('0x76639B0EC8a5f61061c0Dd8C2a915F800af40a65');
+  }, [append]);
+
+  const handleRemoveAttester = useCallback(
+    (index: number) => {
+      remove(index);
+    },
+    [remove]
+  );
 
   const watchValidationSchema = watch('_zuni_smv_validationSchema').trim();
 
@@ -287,20 +314,11 @@ export const VaultForm: IComponent = () => {
         return;
       }
 
-      if (isUnsupportedRule(rule)) {
-        form.clearErrors(ruleNameOp);
-        ops.push(op);
-        thresholds.push('0x');
-        return;
-      }
-
-      // supported rule
-
       // operator is NONE, clear error
-      if (op === RuleOperators.NONE[0]) {
+      if (op === RuleOperators.NONE[0] || isUnsupportedRule(rule)) {
         form.clearErrors(ruleNameOp);
         ops.push(op);
-        thresholds.push('0x');
+        thresholds.push(EMPTY_HEX_DATA);
         return;
       }
 
@@ -313,9 +331,7 @@ export const VaultForm: IComponent = () => {
         return;
       }
       ops.push(op);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const encodedData = encodeAbiParameters([{ type: rule.type }], [value]);
-      thresholds.push(encodedData);
+      thresholds.push(EMPTY_HEX_DATA);
     });
 
     if (isError) {
@@ -343,18 +359,31 @@ export const VaultForm: IComponent = () => {
         claimType: ClaimType.FIXED,
         fixedAmount: BigInt(parseFloat(values._zuni_smv_claimAmount) * 1e18),
         percentage: BigInt(0),
-        customData: '0x' as THexString,
+        customData: EMPTY_HEX_DATA,
       };
     } else if (values._zuni_smv_claimType === 'PERCENTAGE') {
       claimData = {
         claimType: ClaimType.PERCENTAGE,
         fixedAmount: BigInt(0),
         percentage: BigInt(parseFloat(values._zuni_smv_claimPercentage) * 1e18),
-        customData: '0x' as THexString,
+        customData: EMPTY_HEX_DATA,
       };
     }
 
-    const attesters: THexString[] = [];
+    console.log({
+      address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
+      args: [
+        values._zuni_smv_name,
+        values._zuni_smv_description,
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
+        values._zuni_smv_validationSchema as THexString,
+        values._zuni_smv_attesters as THexString[],
+        ops,
+        thresholds,
+        claimData,
+      ],
+    });
 
     writeContract({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
@@ -366,7 +395,7 @@ export const VaultForm: IComponent = () => {
         BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
         BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
         values._zuni_smv_validationSchema as THexString,
-        attesters,
+        values._zuni_smv_attesters as THexString[],
         ops,
         thresholds,
         claimData,
@@ -656,6 +685,52 @@ export const VaultForm: IComponent = () => {
           placeholder: 'The UID of the validation schema. Eg.0x3a2fa...80a42',
           renderSuffix: renderSchemaStatus,
         })}
+        <div className="space-y-2">
+          <FormLabel required>Attesters</FormLabel>
+          {fields.map((item, index) => {
+            return (
+              <FormField
+                control={control}
+                name={`_zuni_smv_attesters.${index}` as never}
+                key={item.key}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          {...field}
+                          placeholder="Enter attester's address"
+                          className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => handleRemoveAttester(index)}>
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            );
+          })}
+          <div className="flex justify-start">
+            <Button
+              type="button"
+              variant="secondary"
+              size={'sm'}
+              onClick={handleAddAttester}
+              className="mt-2">
+              Add attester
+            </Button>
+          </div>
+          <FormMessage>
+            {form.formState.errors?._zuni_smv_attesters?.root?.message || ''}
+          </FormMessage>
+        </div>
+
         {parsedRules.length > 0 && (
           <>
             <h3 className="text-center font-semibold text-sm text-gray-800 !my-4">

@@ -1,13 +1,13 @@
 'use client';
 
+import { VaultActions } from '@/components/vault/VaultActions';
 import { VaultAttesters } from '@/components/vault/VaultAttesters';
+import { VaultClaim } from '@/components/vault/VaultClaim';
 import { VaultProgress } from '@/components/vault/VaultProgress';
 import { VaultRules } from '@/components/vault/VaultsRules';
 import { useVaultStore } from '@/states/vault';
 import { useParams } from 'next/navigation';
-import { StatusPhase } from './status';
 import { TableTxs } from './txs';
-import { VaultClaim } from '@/components/vault/VaultClaim';
 
 export const Content: IComponent = () => {
   const param = useParams<{ id: string }>();
@@ -46,7 +46,12 @@ export const Content: IComponent = () => {
             <h1 className="text-2xl font-bold text-white">{name}</h1>
             <p className="text-lg">{description}</p>
           </div>
-          <StatusPhase start={Number(contributeStart)} end={Number(contributeEnd)} vaultId={id} />
+          <VaultActions
+            vaultId={id}
+            vaultName={name}
+            start={Number(contributeStart)}
+            end={Number(contributeEnd)}
+          />
         </div>
         <hr className="my-4" />
         <div className="flex flex-col gap-4">
