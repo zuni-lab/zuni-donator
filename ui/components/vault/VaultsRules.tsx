@@ -1,7 +1,9 @@
+import { defaultNetworkConfig } from '@/utils/network';
 import { cx, isValidAddress } from '@/utils/tools';
 import { RuleOperators, getOperator, getOperatorLabel } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
 import { isSupportedType } from '@/utils/vaults/types';
+import Link from 'next/link';
 import { decodeAbiParameters } from 'viem';
 
 export const RuleItem: IComponent<{
@@ -16,7 +18,7 @@ export const RuleItem: IComponent<{
   if (!isSupported) {
     thresholValue = 'This field is not supported';
   } else if (isNoneOperator) {
-    thresholValue = 'This is field is skipped';
+    thresholValue = 'This field is skipped';
   } else {
     const abi = [
       {
@@ -24,8 +26,16 @@ export const RuleItem: IComponent<{
         value: threshold,
       },
     ];
-    const value = decodeAbiParameters(abi, threshold)[0] as string;
-    thresholValue = isValidAddress(value) ? value.slice(0, 8) + '...' + value.slice(-8) : value;
+    const value = decodeAbiParameters(abi, threshold)[0];
+    thresholValue = isValidAddress(value as string)
+      ? (value as string).slice(0, 8) + '...' + (value as string).slice(-8)
+      : type === 'uint256'
+        ? Number(value as bigint).toLocaleString()
+        : type === 'bool'
+          ? value
+            ? 'True'
+            : 'False'
+          : (value as string);
   }
 
   return (
@@ -34,7 +44,6 @@ export const RuleItem: IComponent<{
         <div
           className={cx('text-gray-300 uppercase text-sm', {
             'line-through': !isSupported,
-            'text-gray-400': isSupported && isNoneOperator,
           })}>
           {type}
         </div>
@@ -65,15 +74,24 @@ export const RuleItem: IComponent<{
 };
 
 export const VaultRules: IComponent<{
+  uid: string;
   schema: string;
   operators: number[];
   thresholds: THexString[];
-}> = ({ schema, operators, thresholds }) => {
+}> = ({ uid, schema, operators, thresholds }) => {
   const splittedValidationSchema = splitValidationSchema(schema);
 
   return (
     <div className="space-y-2">
-      <h3 className="text-white font-semibold text-lg">Schema:</h3>
+      <h3 className="text-white font-semibold text-lg inline-flex gap-2">
+        Schema:{' '}
+        <Link href={`${defaultNetworkConfig.easScan}/schema/view/${uid}`} passHref legacyBehavior>
+          <a className="text-primary underline line-clamp-1" target="_blank">
+            {uid}
+          </a>
+        </Link>
+      </h3>
+
       <div className="flex flex-col gap-4">
         {splittedValidationSchema.map(([type, name], index) => (
           <RuleItem

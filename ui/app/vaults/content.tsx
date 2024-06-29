@@ -11,7 +11,6 @@ import { VaultListSection } from '../sections/VaultListSection';
 
 export const PageContent = () => {
   const data = useVaultStore((state) => state.getAllOfVaults());
-  const isFetching = useVaultStore((state) => state.loading);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const debounce = useActionDebounce(500, true);
@@ -50,7 +49,7 @@ export const PageContent = () => {
         {renderSearch}
       </div>
       <div className="w-full flex flex-col items-center justify-center mt-12">
-        <VaultListSection vaults={data} loading={isFetching} query={searchQuery} />
+        <VaultListSection vaults={data} query={searchQuery} />
       </div>
     </section>
   );

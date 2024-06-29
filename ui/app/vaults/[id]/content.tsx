@@ -36,8 +36,6 @@ export const Content: IComponent = () => {
     validationSchema,
   } = vault;
 
-  console.log({ vault, validationSchemaUID, fixedAmount, percentage, customData });
-
   return (
     <section className="flex flex-col gap-12">
       <div className=" glass rounded-xl p-8 flex flex-col gap-4 text-gray-400">
@@ -56,7 +54,12 @@ export const Content: IComponent = () => {
         <hr className="my-4" />
         <div className="flex flex-col gap-4">
           <VaultProgress start={Number(contributeStart)} end={Number(contributeEnd)} />
-          <VaultRules schema={validationSchema} operators={operators} thresholds={thresholds} />
+          <VaultRules
+            uid={validationSchemaUID}
+            schema={validationSchema}
+            operators={operators}
+            thresholds={thresholds}
+          />
           <VaultAttesters attesters={attesters} />
           <VaultClaim
             claimType={claimType}

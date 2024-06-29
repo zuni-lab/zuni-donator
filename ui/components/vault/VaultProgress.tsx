@@ -9,8 +9,6 @@ export const VaultProgress: IComponent<{
   end: number;
 }> = ({ start, end }) => {
   const [progress, setProgress] = useState(0);
-  console.log({ start, end });
-
   useEffect(() => {
     const updateProgress = () => {
       const now = Date.now();

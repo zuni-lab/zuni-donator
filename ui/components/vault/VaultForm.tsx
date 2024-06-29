@@ -331,7 +331,9 @@ export const VaultForm: IComponent = () => {
         return;
       }
       ops.push(op);
-      thresholds.push(EMPTY_HEX_DATA);
+
+      const encodedValue = encodeAbiParameters([{ type: rule.type, value }], [value]);
+      thresholds.push(encodedValue);
     });
 
     if (isError) {
@@ -370,21 +372,6 @@ export const VaultForm: IComponent = () => {
       };
     }
 
-    console.log({
-      address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
-      args: [
-        values._zuni_smv_name,
-        values._zuni_smv_description,
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
-        values._zuni_smv_validationSchema as THexString,
-        values._zuni_smv_attesters as THexString[],
-        ops,
-        thresholds,
-        claimData,
-      ],
-    });
-
     writeContract({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
       abi: SMART_VAULT_ABI,
@@ -392,8 +379,8 @@ export const VaultForm: IComponent = () => {
       args: [
         values._zuni_smv_name,
         values._zuni_smv_description,
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime()),
-        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime()),
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositStart)).getTime() / 1000),
+        BigInt(toUtcTime(new Date(values._zuni_smv_depositEnd)).getTime() / 1000),
         values._zuni_smv_validationSchema as THexString,
         values._zuni_smv_attesters as THexString[],
         ops,
@@ -727,7 +714,9 @@ export const VaultForm: IComponent = () => {
             </Button>
           </div>
           <FormMessage>
-            {form.formState.errors?._zuni_smv_attesters?.root?.message || ''}
+            {form.formState.errors?._zuni_smv_attesters?.root
+              ? form.formState.errors._zuni_smv_attesters?.root.message
+              : form.formState.errors._zuni_smv_attesters?.message || ''}
           </FormMessage>
         </div>
 
