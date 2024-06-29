@@ -40,32 +40,23 @@ export const RuleItem: IComponent<{
 
   return (
     <div className="flex gap-2 rounded-md overflow-hidden text-white">
-      <div className="w-[30%] bg-primary p-2">
-        <div
-          className={cx('text-gray-300 uppercase text-sm', {
-            'line-through': !isSupported,
-          })}>
-          {type}
-        </div>
-        <div
-          className={cx('text-white font-medium', {
-            'line-through': !isSupported,
-            'text-gray-400': isSupported && isNoneOperator,
-          })}>
-          {name}
-        </div>
+      <div
+        className={cx('w-[30%] bg-primary p-2', {
+          'bg-gray-500 opacity-60': !isSupported,
+        })}>
+        <div className={cx('text-gray-300 uppercase text-sm')}>{type}</div>
+        <div className={cx('text-white font-medium')}>{name}</div>
       </div>
       <div
         className={cx('w-1/5 bg-orange-400 flex items-center px-4 font-medium uppercase', {
-          'line-through': !isSupported,
-          'drop-shadow-sm': isSupported && isNoneOperator,
+          'bg-gray-500 opacity-60': !isSupported,
         })}>
         {isSupported ? getOperatorLabel(getOperator(operator)) : 'Unsupported'}
       </div>
       <div
-        className={cx('w-1/2 bg-accent-foreground glass  flex items-center px-4', {
-          'line-through': !isSupported,
-          'text-gray-400': isSupported && isNoneOperator,
+        className={cx('w-1/2 bg-accent-foreground flex items-center px-4', {
+          'bg-gray-500 opacity-60': !isSupported,
+          glass: isSupported,
         })}>
         {thresholValue}
       </div>

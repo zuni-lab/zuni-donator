@@ -11,7 +11,7 @@ interface IVaultState {
   loading: boolean;
   addVault: (vault: TVault) => void;
   getVault: (uuid: THexString) => TVault | undefined;
-  fetchVaults: (uuid: THexString[], registry: SchemaRegistry, eas: EAS) => void;
+  fetchVaults: (uuid: THexString[], registry: SchemaRegistry | null, eas: EAS | null) => void;
   getComingVaults: (n: number) => TVault[];
   getAllOfVaults: () => TVault[];
 }
@@ -20,8 +20,8 @@ export const useVaultStore = create<IVaultState>()(
   persist(
     (set, get) => ({
       vaults: {},
-      loading: false,
       schema: {},
+      loading: false,
       addVault: (vault) => {
         const serializedVault = serializeVault(vault);
         set((state) => ({
@@ -40,8 +40,17 @@ export const useVaultStore = create<IVaultState>()(
           set({ loading: true });
 
           const vaultIds = newVaultIds.filter((id) => !get().vaults[id]);
+
           if (!vaultIds.length) {
             return;
+          }
+
+          if (!registry) {
+            throw new Error('Schema registry not found');
+          }
+
+          if (!eas) {
+            throw new Error('EAS not found');
           }
 
           if (!get().schema[ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID as THexString]) {
@@ -74,6 +83,7 @@ export const useVaultStore = create<IVaultState>()(
               if (!rsp) {
                 throw new Error('Attestation not found');
               }
+
               const values = decodeAbiParameters(abi, rsp.data as THexString);
               if (values.length !== abi.length) {
                 throw new Error('Invalid attestation');
@@ -90,8 +100,8 @@ export const useVaultStore = create<IVaultState>()(
                 uuid: uid,
                 name: values[0] as string,
                 description: values[1] as string,
-                contributeStart: (values[2] as bigint) * 1000n,
-                contributeEnd: (values[3] as bigint) * 1000n,
+                contributeStart: values[2] as bigint,
+                contributeEnd: values[3] as bigint,
                 validationSchemaUID: validationUID,
                 attesters: values[5] as THexString[],
                 operators: values[6] as number[],
@@ -103,6 +113,7 @@ export const useVaultStore = create<IVaultState>()(
                 validationSchema: sr.schema,
                 time: rsp.time,
               };
+
               set((state) => ({
                 vaults: {
                   ...state.vaults,
@@ -148,7 +159,6 @@ export const useVaultStore = create<IVaultState>()(
     {
       name: 'vaults-storage',
       partialize: (state) => ({ vaults: state.vaults, schema: state.schema }),
-      skipHydration: true,
     }
   )
 );
@@ -159,6 +169,7 @@ const serializeVault = (vault: TVault) => ({
   contributeEnd: vault.contributeEnd.toString(),
   fixedAmount: vault.fixedAmount.toString(),
   percentage: vault.percentage.toString(),
+  time: vault.time.toString(),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,4 +179,5 @@ const deserializeVault = (vault: any): TVault => ({
   contributeEnd: BigInt(vault.contributeEnd),
   fixedAmount: BigInt(vault.fixedAmount),
   percentage: BigInt(vault.percentage),
+  time: BigInt(vault.time),
 });
