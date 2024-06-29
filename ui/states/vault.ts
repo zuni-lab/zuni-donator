@@ -39,10 +39,7 @@ export const useVaultStore = create<IVaultState>()(
         try {
           set({ loading: true });
 
-          const vaultIds = newVaultIds.filter((id) => {
-            const existed = get().vaults[id];
-            return !existed;
-          });
+          const vaultIds = newVaultIds.filter((id) => !get().vaults[id]);
 
           if (!vaultIds.length) {
             return;
@@ -172,6 +169,7 @@ const serializeVault = (vault: TVault) => ({
   contributeEnd: vault.contributeEnd.toString(),
   fixedAmount: vault.fixedAmount.toString(),
   percentage: vault.percentage.toString(),
+  time: vault.time.toString(),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -181,4 +179,5 @@ const deserializeVault = (vault: any): TVault => ({
   contributeEnd: BigInt(vault.contributeEnd),
   fixedAmount: BigInt(vault.fixedAmount),
   percentage: BigInt(vault.percentage),
+  time: BigInt(vault.time),
 });

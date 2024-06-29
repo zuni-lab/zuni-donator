@@ -75,15 +75,11 @@ const baseFormSchema = z.object({
     .refine((val) => isValidBytesWithLength(val, 32), {
       message: 'Validation schema must be a valid bytes string, eg. 0x3a2fa...80a42',
     }),
-  _zuni_smv_attesters: z
-    .array(
-      z.string().refine((val) => isValidAddress(val), {
-        message: 'Invalid attester address',
-      })
-    )
-    .min(1, {
-      message: 'At least one attester is required',
-    }),
+  _zuni_smv_attesters: z.array(
+    z.string().refine((val) => isValidAddress(val), {
+      message: 'Invalid attester address',
+    })
+  ),
 });
 
 const baseDefaultValues = {
@@ -672,7 +668,7 @@ export const VaultForm: IComponent = () => {
           renderSuffix: renderSchemaStatus,
         })}
         <div className="space-y-2">
-          <FormLabel required>Attesters</FormLabel>
+          <FormLabel>Attesters</FormLabel>
           {fields.map((item, index) => {
             return (
               <FormField
