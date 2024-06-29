@@ -1,3 +1,5 @@
+'use client';
+
 import { VaultCard } from '@/components/vault/VaultCard';
 import { Inbox } from 'lucide-react';
 

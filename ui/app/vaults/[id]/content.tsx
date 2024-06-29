@@ -14,7 +14,7 @@ export const Content: IComponent = () => {
   const id = param.id;
   const vault = getVault(id as THexString);
   if (!vault) {
-    return null;
+    return <>Not Found</>;
   }
 
   const {

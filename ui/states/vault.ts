@@ -134,6 +134,7 @@ export const useVaultStore = create<IVaultState>()(
     {
       name: 'vaults-storage',
       partialize: (state) => ({ vaults: state.vaults }),
+      skipHydration: true,
     }
   )
 );

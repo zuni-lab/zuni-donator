@@ -2,6 +2,10 @@ import { ProjectENV } from '@env';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+const ALCHEMY_RPC_URL = `wss://base-sepolia.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`;
+
+const providerCache: { [key: string]: ethers.WebSocketProvider } = {};
+
 export const useRpcProvider = (rpcUrl: string) => {
   const [reconnectTrigger, setReconnectTrigger] = useState(0);
 
@@ -12,14 +16,17 @@ export const useRpcProvider = (rpcUrl: string) => {
   }, []);
 
   const provider = useMemo(() => {
-    console.log('Connecting to:', rpcUrl);
-    const newProvider = new ethers.WebSocketProvider(rpcUrl);
-    newProvider.websocket.close = reconnect;
-    newProvider.websocket.onerror = (err) => {
-      console.error('WebSocket error:', err);
-      newProvider?.websocket.close();
-    };
-    return newProvider;
+    if (!providerCache[rpcUrl]) {
+      console.log('Connecting to:', rpcUrl);
+      const newProvider = new ethers.WebSocketProvider(rpcUrl);
+      newProvider.websocket.close = reconnect;
+      newProvider.websocket.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        newProvider?.websocket.close();
+      };
+      providerCache[rpcUrl] = newProvider;
+    }
+    return providerCache[rpcUrl];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rpcUrl, reconnectTrigger, reconnect]);
 
@@ -33,7 +40,5 @@ export const useRpcProvider = (rpcUrl: string) => {
 };
 
 export const useAlchemyProvider = () => {
-  return useRpcProvider(
-    `wss://base-sepolia.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`
-  );
+  return useRpcProvider(ALCHEMY_RPC_URL);
 };
