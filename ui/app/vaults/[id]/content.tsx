@@ -47,6 +47,7 @@ export const Content: IComponent = () => {
           <VaultActions
             vaultId={id as THexString}
             vaultName={name}
+            schemaUID={validationSchemaUID}
             start={Number(contributeStart)}
             end={Number(contributeEnd)}
           />

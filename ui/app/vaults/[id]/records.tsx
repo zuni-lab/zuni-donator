@@ -39,6 +39,10 @@ type Claim = {
 
 type Record = Contribution | Claim;
 
+const isContribution = (record: Record): record is Contribution => {
+  return (record as Contribution).contributor !== undefined;
+};
+
 export const TableTxs: IComponent<{
   vaultId: `0x${string}`;
   recordType: 'Contribute' | 'Claim';
@@ -134,7 +138,7 @@ export const TableTxs: IComponent<{
         <TableHeader>
           <TableRow>
             <TableHead className="w-[190px]">Tx Hash</TableHead>
-            <TableHead className="w-[398px]">
+            <TableHead className="w-[408px]">
               {recordType === 'Contribute' ? 'Contributor' : 'Validation UID'}
             </TableHead>
             <TableHead>Attestation</TableHead>
@@ -164,9 +168,29 @@ export const TableTxs: IComponent<{
                 </div>
               </TableCell>
               <TableCell>
-                {recordType === 'Contribute'
-                  ? (record as Contribution).contributor
-                  : (record as Claim).validation}
+                {isContribution(record) && (
+                  <div className="text-gray-400 flex items-center gap-2">
+                    <span className="text-gray-400 line-clamp-1">{record.contributor}</span>
+                    <CopyToClipboard text={record.contributor}>
+                      <Copy size={16} />
+                    </CopyToClipboard>
+                  </div>
+                )}
+                {!isContribution(record) && (
+                  <div className="text-gray-400 flex items-center gap-2">
+                    <Link
+                      href={`${defaultNetworkConfig.easScan}/attestation/view/${record.validation}`}
+                      passHref
+                      legacyBehavior>
+                      <a className="text-primary underline line-clamp-1" target="_blank">
+                        {record.validation.slice(0, 19) + '...' + record.validation.slice(-19)}
+                      </a>
+                    </Link>
+                    <CopyToClipboard text={record.txHash}>
+                      <Copy size={16} />
+                    </CopyToClipboard>
+                  </div>
+                )}
               </TableCell>
               <TableCell>
                 <div className="text-gray-400 flex items-center gap-2">

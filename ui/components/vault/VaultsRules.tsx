@@ -80,6 +80,7 @@ export const VaultRules: IComponent<{
             {uid}
           </a>
         </Link>
+        (on EAS explorer)
       </h3>
 
       <div className="flex flex-col gap-4">

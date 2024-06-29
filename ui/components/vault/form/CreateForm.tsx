@@ -25,7 +25,7 @@ import { Loader, ShieldBan, ShieldCheck, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
-import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { BaseError, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
 import { TooltipWrapper } from '@/components/TooltipWrapper';
 import { TxDialog } from '@/components/vault/TxDialog';
@@ -385,12 +385,6 @@ export const CreateVaultForm: IComponent = () => {
     });
   });
 
-  useEffect(() => {
-    if (writeCallError) {
-      console.error('Error writing contract:', writeCallError);
-    }
-  }, [writeCallError]);
-
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({
     hash,
   });
@@ -744,15 +738,15 @@ export const CreateVaultForm: IComponent = () => {
             {isPending || isConfirming ? (
               <Loader className="w-4 h-4 text-background animate-spin" />
             ) : (
-              'Submit'
+              'Create vault'
             )}
           </Button>
         </div>
-        {/* {error && (
-          <div className="text-destructive">
-            Error: {(error as BaseError).shortMessage || error.message}
+        {writeCallError && (
+          <div className="text-destructive text-sm">
+            Error: {(writeCallError as BaseError).shortMessage || writeCallError.message}
           </div>
-        )} */}
+        )}
         {<TxDialog hash={hashState as string} onClose={() => setHash('')} />}
         {/* {isConfirming && <div>Waiting for confirmation...</div>} */}
         {/* {isConfirmed && <div>Transaction confirmed.</div>} */}

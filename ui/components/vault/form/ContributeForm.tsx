@@ -15,7 +15,7 @@ import { parseEther } from 'ethers';
 import { Loader } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { BaseError, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { z } from 'zod';
 
 const formSchma = z.object({
@@ -68,12 +68,6 @@ export const ContributeVaultForm: IComponent<{
   });
 
   useEffect(() => {
-    if (writeCallError) {
-      console.error('Error writing contract:', writeCallError);
-    }
-  }, [writeCallError]);
-
-  useEffect(() => {
     if (isSuccess && hash) {
       form.reset();
       setHash(hash as string);
@@ -114,11 +108,16 @@ export const ContributeVaultForm: IComponent<{
             {isPending || isConfirming ? (
               <Loader className="w-4 h-4 text-background animate-spin" />
             ) : (
-              'Send'
+              'Contribute'
             )}
           </Button>
         </div>
         {<TxDialog hash={hashState as string} onClose={() => setHash('')} />}
+        {writeCallError && (
+          <div className="text-destructive text-sm">
+            Error: {(writeCallError as BaseError).shortMessage || writeCallError.message}
+          </div>
+        )}
       </form>
     </Form>
   );
