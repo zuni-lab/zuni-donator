@@ -1,10 +1,13 @@
 'use client';
 
+import { VaultAttesters } from '@/components/vault/VaultAttesters';
+import { VaultProgress } from '@/components/vault/VaultProgress';
+import { VaultRules } from '@/components/vault/VaultsRules';
 import { useVaultStore } from '@/states/vault';
-import { getFormattedDate } from '@/utils/tools';
 import { useParams } from 'next/navigation';
 import { StatusPhase } from './status';
 import { TableTxs } from './txs';
+import { VaultClaim } from '@/components/vault/VaultClaim';
 
 export const Content: IComponent = () => {
   const param = useParams<{ id: string }>();
@@ -33,30 +36,32 @@ export const Content: IComponent = () => {
     validationSchema,
   } = vault;
 
-  console.log({ validationSchemaUID, fixedAmount, percentage, customData });
+  console.log({ vault, validationSchemaUID, fixedAmount, percentage, customData });
 
   return (
-    <div className="flex flex-col gap-12">
-      <div className="w-full flex justify-between gap-4">
-        <div className="max-w-full glass rounded-xl p-8 flex flex-col gap-4 text-gray-400">
-          <h1 className="text-2xl font-bold text-white">{name}</h1>
-          <p className="text-lg">{description}</p>
-          <div className="flex flex-col gap-2">
-            <span className="font-bold">Contribute Start:</span>{' '}
-            {getFormattedDate(Number(contributeStart) / 1000)}
-            <span className="font-bold">Contribute End:</span>{' '}
-            {getFormattedDate(Number(contributeEnd))}
-            <span className="font-bold">Validation Schema:</span> {validationSchema}
-            <span className="font-bold">Attesters:</span> {attesters.join(', ')}
-            <span className="font-bold">Operators:</span> {operators.join(', ')}
-            <span className="font-bold">Thresholds:</span> {thresholds.join(', ')}
-            <span className="font-bold">Claim Type:</span> {claimType}
+    <section className="flex flex-col gap-12">
+      <div className=" glass rounded-xl p-8 flex flex-col gap-4 text-gray-400">
+        <div className="w-full flex justify-between gap-4 items-start">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-white">{name}</h1>
+            <p className="text-lg">{description}</p>
           </div>
+          <StatusPhase start={Number(contributeStart)} end={Number(contributeEnd)} vaultId={id} />
         </div>
-
-        <StatusPhase />
+        <hr className="my-4" />
+        <div className="flex flex-col gap-4">
+          <VaultProgress start={Number(contributeStart)} end={Number(contributeEnd)} />
+          <VaultRules schema={validationSchema} operators={operators} thresholds={thresholds} />
+          <VaultAttesters attesters={attesters} />
+          <VaultClaim
+            claimType={claimType}
+            fixedAmount={fixedAmount}
+            percentage={percentage}
+            customData={customData}
+          />
+        </div>
       </div>
       <TableTxs />
-    </div>
+    </section>
   );
 };

@@ -16,6 +16,12 @@ export const getFormattedTimeAndDate = (inputDate: string | number) => {
   return date.isValid() ? formattedDate : 'Never';
 };
 
+export const getForrmattedFullDate = (inputDate: string | number) => {
+  const date = moment(inputDate).utc();
+  const formattedDate = date.format('HH:mm Do MMM YYYY');
+  return date.isValid() ? formattedDate : 'Never';
+};
+
 // HH, DD/MM/YYYY
 export const getFormattedDate = (inputDate: string | number) => {
   const date = moment(inputDate);

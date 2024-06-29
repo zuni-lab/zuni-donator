@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 
 interface IVaultState {
   vaults: Record<THexString, TVault>;
+  schema: Record<THexString, string>;
   loading: boolean;
   addVault: (vault: TVault) => void;
   getVault: (uuid: THexString) => TVault | undefined;
@@ -20,6 +21,7 @@ export const useVaultStore = create<IVaultState>()(
     (set, get) => ({
       vaults: {},
       loading: false,
+      schema: {},
       addVault: (vault) => {
         const serializedVault = serializeVault(vault);
         set((state) => ({
@@ -42,15 +44,26 @@ export const useVaultStore = create<IVaultState>()(
             return;
           }
 
-          const schemaRecord = await registry?.getSchema({
-            uid: ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID,
-          });
+          if (!get().schema[ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID as THexString]) {
+            const schemaRecord = await registry?.getSchema({
+              uid: ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID,
+            });
 
-          if (!schemaRecord || !schemaRecord.schema) {
-            throw new Error('Schema not found');
+            if (!schemaRecord || !schemaRecord.schema) {
+              throw new Error('Schema not found');
+            }
+
+            set((state) => ({
+              schema: {
+                ...state.schema,
+                [ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID as THexString]: schemaRecord.schema,
+              },
+            }));
           }
 
-          const abi = splitValidationSchema(schemaRecord.schema).map((tupple) => ({
+          const abi = splitValidationSchema(
+            get().schema[ProjectENV.NEXT_PUBLIC_VAULT_SCHEMA_UUID as THexString]
+          ).map((tupple) => ({
             type: tupple[0],
             name: tupple[1],
           }));
@@ -133,7 +146,7 @@ export const useVaultStore = create<IVaultState>()(
     }),
     {
       name: 'vaults-storage',
-      partialize: (state) => ({ vaults: state.vaults }),
+      partialize: (state) => ({ vaults: state.vaults, schema: state.schema }),
       skipHydration: true,
     }
   )
