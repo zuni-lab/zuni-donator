@@ -10,7 +10,7 @@ export const formatWalletAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-6)}`;
 };
 
-export const getFormattedTimeAndDate = (inputDate: string | number) => {
+export const getFomattedTimeAndDate = (inputDate: string | number) => {
   const date = moment(inputDate);
   const formattedDate = date.format('HH:mm Do MMM');
   return date.isValid() ? formattedDate : 'Never';

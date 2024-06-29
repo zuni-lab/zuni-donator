@@ -1,20 +1,25 @@
 'use client';
 
+import { CopyToClipboard } from '@/components/CopyToClipboard';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/shadcn/Table';
-import { useCallback, useEffect, useState } from 'react';
-import { usePublicClient, useWatchContractEvent } from 'wagmi';
-import { wagmiConfig } from '@/utils/wagmi';
 import { SMART_VAULT_ABI } from '@/constants/abi';
+import { defaultNetworkConfig } from '@/utils/network';
+import { getForrmattedFullDate } from '@/utils/tools';
+import { wagmiConfig } from '@/utils/wagmi';
 import { ProjectENV } from '@env';
+import { Copy } from 'lucide-react';
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 import { formatEther } from 'viem';
+import { baseSepolia } from 'viem/chains';
+import { usePublicClient, useWatchContractEvent } from 'wagmi';
 
 type Contribution = {
   txHash: `0x${string}`;
@@ -122,18 +127,20 @@ export const TableTxs: IComponent<{
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">
-        {recordType === 'Contribute' ? 'List of contributors' : 'List of claimers'}
+      <h1 className="text-2xl font-bold py-4">
+        {recordType === 'Contribute' ? 'Contributors' : 'Claimers'}
       </h1>
       <Table>
-        <TableCaption>Contribution Records</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>Tx Hash</TableHead>
-            <TableHead>{recordType === 'Contribute' ? 'Contributor' : 'Validation UID'}</TableHead>
+            <TableHead className="w-[190px]">Tx Hash</TableHead>
+            <TableHead className="w-[398px]">
+              {recordType === 'Contribute' ? 'Contributor' : 'Validation UID'}
+            </TableHead>
             <TableHead>Attestation</TableHead>
             <TableHead className="text-right">
-              {recordType === 'Contribute' ? 'Contribute At' : 'Claim At'}
+              {/* {recordType === 'Contribute' ? 'Contribute At' : 'Claim At'} */}
+              Time At
             </TableHead>
             <TableHead className="text-right">Amount</TableHead>
           </TableRow>
@@ -141,14 +148,44 @@ export const TableTxs: IComponent<{
         <TableBody>
           {records.map((record, id) => (
             <TableRow key={id}>
-              <TableCell className="font-medium">{record.txHash}</TableCell>
+              <TableCell className="font-medium">
+                <div className="text-gray-400 flex items-center gap-2">
+                  <Link
+                    href={`${baseSepolia.blockExplorers.default.url}/tx/${record.txHash}`}
+                    passHref
+                    legacyBehavior>
+                    <a className="text-primary underline line-clamp-1" target="_blank">
+                      {record.txHash.slice(0, 6) + '...' + record.txHash.slice(-6)}
+                    </a>
+                  </Link>
+                  <CopyToClipboard text={record.txHash}>
+                    <Copy size={16} />
+                  </CopyToClipboard>
+                </div>
+              </TableCell>
               <TableCell>
                 {recordType === 'Contribute'
                   ? (record as Contribution).contributor
                   : (record as Claim).validation}
               </TableCell>
-              <TableCell>{record.attestation}</TableCell>
-              <TableCell className="text-right">{record.time.toLocaleString()}</TableCell>
+              <TableCell>
+                <div className="text-gray-400 flex items-center gap-2">
+                  <Link
+                    href={`${defaultNetworkConfig.easScan}/attestation/view/${record.attestation}`}
+                    passHref
+                    legacyBehavior>
+                    <a className="text-primary underline line-clamp-1" target="_blank">
+                      {record.attestation.slice(0, 8) + '...' + record.attestation.slice(-8)}
+                    </a>
+                  </Link>
+                  <CopyToClipboard text={record.txHash}>
+                    <Copy size={16} />
+                  </CopyToClipboard>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                {getForrmattedFullDate(record.time.getTime())}
+              </TableCell>
               <TableCell className="text-right">{formatEther(record.amount)} ETH</TableCell>
             </TableRow>
           ))}
