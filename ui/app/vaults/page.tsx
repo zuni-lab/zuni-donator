@@ -7,7 +7,7 @@ export const metadata: Metadata = RouterMeta.Vaults;
 
 export default function ValutPage() {
   return (
-    <main className="mt-20">
+    <main>
       <Heading
         title="Our Vaults"
         description="Explore the one that best suits your needs."

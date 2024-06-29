@@ -154,3 +154,7 @@ export const isNBytesValue = (type: TRuleType, val: string): boolean => {
   }
   return isValidBytesWithLength(val, num);
 };
+
+export const isSupportedType = (type: TRuleType): boolean => {
+  return !!RuleTypes[type];
+};

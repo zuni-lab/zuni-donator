@@ -78,11 +78,13 @@ export const VaultCard: IComponent<TVault> = ({
             </a>
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <span className="text-white">Operator:</span>
-          <span className="text-white col-span-2">Threshold:</span>
+        <div className="flex flex-wrap gap-2 text-white">
+          <span className="grow">Constraint</span>
+          <span className="w-1/5 text-right">Operator</span>
+          <span className="w-1/3 text-right col-span-2">Threshold</span>
         </div>
-        {operators.slice(0, 6).map((operator, index) => {
+        {splittedValidationSchema.slice(0, 6).map(([type, name], index) => {
+          const operator = operators[index];
           const isNoneOperator = operator === RuleOperators.NONE[0];
           let thresholdValue = '-';
           if (!isNoneOperator) {
@@ -95,15 +97,19 @@ export const VaultCard: IComponent<TVault> = ({
             ];
             const value = decodeAbiParameters(abi, thresholds[index])[0] as string;
             thresholdValue = isValidAddress(value)
-              ? value.slice(0, 8) + '...' + value.slice(-8)
+              ? value.slice(0, 4) + '...' + value.slice(-2)
               : value;
           }
           return (
-            <div key={index} className="grid grid-cols-3 gap-2">
-              <span className="text-gray-400">
+            <div key={index} className="flex flex-wrap gap-2 text-xs items-center">
+              <span className="max-w-[120px] grow flex flex-col line-clamp-1">
+                <span className="text-white">{type}</span>
+                <span className="text-gray-400 max-w-full line-clamp-1">{name}</span>
+              </span>
+              <span className="w-1/5 text-gray-400 text-right">
                 {getOperator(operator) || `Unknown Operator ${operator}`}
               </span>
-              <span className="text-gray-400 col-span-2 line-clamp-1">{thresholdValue}</span>
+              <span className="w-1/3 text-gray-400 line-clamp-1 text-right">{thresholdValue}</span>
             </div>
           );
         })}

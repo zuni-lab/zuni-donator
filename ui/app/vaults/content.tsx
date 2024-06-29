@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/shadcn/Button';
 import { Input } from '@/components/shadcn/Input';
-import { VaultDialog } from '@/components/vault/VaultDialog';
+import { CreateVaultMode, VaultDialog } from '@/components/vault/VaultDialog';
 import { useActionDebounce } from '@/hooks/useAction';
 import { useVaultStore } from '@/states/vault';
 import { SearchIcon } from 'lucide-react';
@@ -11,7 +11,6 @@ import { VaultListSection } from '../sections/VaultListSection';
 
 export const PageContent = () => {
   const data = useVaultStore((state) => state.getAllOfVaults());
-  const isFetching = useVaultStore((state) => state.loading);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const debounce = useActionDebounce(500, true);
@@ -44,11 +43,13 @@ export const PageContent = () => {
   return (
     <section className="mt-6">
       <div className="flex items-center justify-between">
-        <VaultDialog />
+        <VaultDialog>
+          <CreateVaultMode />
+        </VaultDialog>
         {renderSearch}
       </div>
       <div className="w-full flex flex-col items-center justify-center mt-12">
-        <VaultListSection vaults={data} loading={isFetching} query={searchQuery} />
+        <VaultListSection vaults={data} query={searchQuery} />
       </div>
     </section>
   );

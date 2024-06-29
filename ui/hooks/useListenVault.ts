@@ -57,9 +57,13 @@ export const useListenVaults = (contractAddress: string, contractAbi: any) => {
     [contractAddress, contractAbi, setVaultIds]
   );
 
-  const handleCreateVaultEvent = useCallback((vaultId: THexString) => {
-    setVaultIds((prev) => [...new Set([...prev, vaultId])]);
-  }, []);
+  const handleCreateVaultEvent = useCallback(
+    (vaultId: THexString) => {
+      console.log('CreateVault event:', vaultId);
+      setVaultIds((prev) => [...new Set([...prev, vaultId])]);
+    },
+    [setVaultIds]
+  );
 
   useEffect(() => {
     if (!provider) {
@@ -86,6 +90,8 @@ export const useListenVaults = (contractAddress: string, contractAbi: any) => {
     if (vaultIds.length === 0) {
       return;
     }
+
+    console.log('Fetching vaults:', vaultIds);
 
     fetchVaults(vaultIds, registry, eas);
   }, [registry, eas, registryError, easError, vaultIds, fetchVaults]);

@@ -3,6 +3,8 @@ import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
 import { useAlchemyProvider } from './useProvider';
 
+const easCache: { [key: string]: EAS } = {};
+
 export const useEAS = (address: string) => {
   const provider = useAlchemyProvider();
   const [eas, setEas] = useState<EAS | null>(null);
@@ -14,14 +16,20 @@ export const useEAS = (address: string) => {
         throw new Error('Address not found');
       }
 
-      const eas = new EAS(address);
-      if (provider) {
-        await eas.connect(provider as unknown as ethers.Signer);
+      if (easCache[address]) {
+        setEas(easCache[address]);
+        return;
       }
 
-      setEas(eas);
+      const newEas = new EAS(address);
+      if (provider) {
+        await newEas.connect(provider as unknown as ethers.Signer);
+      }
+
+      easCache[address] = newEas;
+      setEas(newEas);
     } catch (err) {
-      setError(`Failed to load schema registry: ${err}`);
+      setError(`Failed to load EAS: ${err}`);
     }
   }, [address, provider]);
 
