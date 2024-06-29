@@ -1,5 +1,5 @@
 import { defaultNetworkConfig } from '@/utils/network';
-import { cx, isValidAddress } from '@/utils/tools';
+import { cx } from '@/utils/tools';
 import { RuleOperators, getOperator, getOperatorLabel } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
 import { isSupportedType } from '@/utils/vaults/types';
@@ -27,9 +27,8 @@ export const RuleItem: IComponent<{
       },
     ];
     const value = decodeAbiParameters(abi, threshold)[0];
-    thresholValue = isValidAddress(value as string)
-      ? (value as string).slice(0, 8) + '...' + (value as string).slice(-8)
-      : type === 'uint256'
+    thresholValue =
+      type === 'uint256'
         ? Number(value as bigint).toLocaleString()
         : type === 'bool'
           ? value
@@ -81,6 +80,7 @@ export const VaultRules: IComponent<{
             {uid}
           </a>
         </Link>
+        (on EAS explorer)
       </h3>
 
       <div className="flex flex-col gap-4">

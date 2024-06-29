@@ -13,7 +13,9 @@ import {
 } from '@/shadcn/Dialog';
 import { cx } from '@/utils/tools';
 import { AccountConnect } from '../account/AccountConnect';
-import { VaultForm } from './VaultForm';
+import { ClaimVaultForm } from './form/ClaimForm';
+import { ContributeVaultForm } from './form/ContributeForm';
+import { CreateVaultForm } from './form/CreateForm';
 
 export const CreateVaultMode: IComponent = () => {
   return (
@@ -22,19 +24,38 @@ export const CreateVaultMode: IComponent = () => {
         <DialogTitle>Create a new vault</DialogTitle>
         <DialogDescription>Make changes to your profile here.</DialogDescription>
       </DialogHeader>
-      <VaultForm />
+      <CreateVaultForm />
     </>
   );
 };
 
-export const DepositVaultMode: IComponent = () => {
+export const ContributeVaultMode: IComponent<{
+  vaultId: THexString;
+  vaultName: string;
+}> = ({ vaultId, vaultName }) => {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Deposit to vault</DialogTitle>
-        <DialogDescription>Make changes to your profile here.</DialogDescription>
+        <DialogTitle>Contribute to vault</DialogTitle>
+        <DialogDescription>Contribute to the vault by depositing your ETH.</DialogDescription>
       </DialogHeader>
-      <VaultForm />
+      <ContributeVaultForm vaultId={vaultId} vaultName={vaultName} />
+    </>
+  );
+};
+
+export const ClaimVaultMode: IComponent<{
+  vaultId: THexString;
+  vaultName: string;
+  schemaUID: THexString;
+}> = ({ vaultId, vaultName, schemaUID }) => {
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Claim from vault</DialogTitle>
+        <DialogDescription>Claim your funds from the vault.</DialogDescription>
+      </DialogHeader>
+      <ClaimVaultForm vaultId={vaultId} vaultName={vaultName} schemaUID={schemaUID} />
     </>
   );
 };

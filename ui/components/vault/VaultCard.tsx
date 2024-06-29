@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/shadcn/Card';
 import { defaultNetworkConfig } from '@/utils/network';
-import { getFormattedTimeAndDate, isValidAddress } from '@/utils/tools';
+import { getFomattedTimeAndDate, isValidAddress } from '@/utils/tools';
 import { ClaimType } from '@/utils/vaults/claim';
 import { RuleOperators, getOperator } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
@@ -44,11 +44,11 @@ export const VaultCard: IComponent<TVault> = ({
           <div className="flex flex-col text-xs">
             <span className="flex justify-between">
               <span className="w-12 text-white">Start:</span>
-              {getFormattedTimeAndDate(Number(contributeStart))}
+              {getFomattedTimeAndDate(Number(contributeStart))}
             </span>
             <span className="flex justify-between">
               <span className="w-12 text-white">End:</span>
-              {getFormattedTimeAndDate(Number(contributeEnd))}
+              {getFomattedTimeAndDate(Number(contributeEnd))}
             </span>
           </div>
           <div className="flex flex-col text-xs">
