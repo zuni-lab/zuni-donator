@@ -8,7 +8,6 @@ import { VaultRules } from '@/components/vault/VaultsRules';
 import { useVaultStore } from '@/states/vault';
 import { useParams } from 'next/navigation';
 import { TableTxs } from './records';
-import { StatusPhase } from './status';
 
 export const Content: IComponent = () => {
   const param = useParams<{ id: string }>();
@@ -46,7 +45,7 @@ export const Content: IComponent = () => {
             <p className="text-lg">{description}</p>
           </div>
           <VaultActions
-            vaultId={id}
+            vaultId={id as THexString}
             vaultName={name}
             start={Number(contributeStart)}
             end={Number(contributeEnd)}
@@ -54,7 +53,10 @@ export const Content: IComponent = () => {
         </div>
         <hr className="my-4" />
         <div className="flex flex-col gap-4">
-          <VaultProgress start={Number(contributeStart)} end={Number(contributeEnd)} />
+          <VaultProgress
+            start={Number(contributeStart) * 1000}
+            end={Number(contributeEnd) * 1000}
+          />
           <VaultRules
             uid={validationSchemaUID}
             schema={validationSchema}
@@ -69,11 +71,6 @@ export const Content: IComponent = () => {
             customData={customData}
           />
         </div>
-
-        <StatusPhase
-          vaultId={id as `0x${string}`}
-          buttonType={Date.now() > contributeEnd ? 'Claim' : 'Contribute'}
-        />
       </div>
       {Date.now() > contributeEnd && <TableTxs vaultId={id as `0x${string}`} recordType="Claim" />}
       <TableTxs vaultId={id as `0x${string}`} recordType="Contribute" />
