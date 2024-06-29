@@ -33,6 +33,9 @@ interface ISmartVault {
     /// @notice Thrown when the claim time is not started
     error ClaimNotStarted();
 
+    /// @notice Thrown when amount is zero
+    error ZeroContribution();
+
     /// @notice Thrown when the vault is not found
     error VaultNotFound();
 

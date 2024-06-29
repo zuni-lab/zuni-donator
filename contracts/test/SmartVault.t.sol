@@ -172,8 +172,8 @@ contract SmartVaultTest is Test {
             claimData
         );
 
-        address contributor1 = makeAddr("contribut1");
-        address contributor2 = makeAddr("contribut2");
+        address contributor1 = makeAddr("contribute1");
+        address contributor2 = makeAddr("contribute2");
 
         deal(contributor1, 1000 ether);
         deal(contributor2, 1000 ether);
