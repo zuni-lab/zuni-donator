@@ -33,8 +33,7 @@ export const Content: IComponent = () => {
     validationSchema,
   } = vault;
 
-  console.log({ vault });
-  console.log(Number(contributeEnd));
+  console.log({ validationSchemaUID, fixedAmount, percentage, customData });
 
   return (
     <div className="flex flex-col gap-12">
