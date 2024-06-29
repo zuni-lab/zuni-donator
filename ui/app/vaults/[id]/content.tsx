@@ -69,7 +69,10 @@ export const Content: IComponent = () => {
           />
         </div>
       </div>
-      <TableTxs />
+      {contributeEnd * 1000n > Date.now() && (
+        <TableTxs vaultId={id as `0x${string}`} recordType="Claim" />
+      )}
+      <TableTxs vaultId={id as `0x${string}`} recordType="Contribute" />
     </section>
   );
 };
