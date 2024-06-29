@@ -8,10 +8,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_SMART_VAULT_ADDRESS: z.string().startsWith('0x').length(42),
   NEXT_PUBLIC_EAS_ADDRESS: z.string().startsWith('0x').length(42),
   NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS: z.string().startsWith('0x').length(42),
-  NEXT_PUBLIC_VAULT_SCHEMA_UUID: z
-    .string()
-    .length(66)
-    .default('0x44a41b27edee9c517cd3d340f054d3e32cc96cb2ef135e959595831d3c3ffc15'),
+  NEXT_PUBLIC_VAULT_SCHEMA_UUID: z.string().length(66),
   NEXT_PUBLIC_WALLET_CONNECT_ENV_ID: z.string(),
   NEXT_PUBLIC_ALCHEMY_API_KEY: z.string(),
 });

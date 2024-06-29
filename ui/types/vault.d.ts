@@ -32,4 +32,5 @@ type TVault = {
   percentage: bigint;
   customData: THexString;
   validationSchema: string;
+  time: bigint;
 };

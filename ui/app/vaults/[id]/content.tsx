@@ -7,7 +7,8 @@ import { VaultProgress } from '@/components/vault/VaultProgress';
 import { VaultRules } from '@/components/vault/VaultsRules';
 import { useVaultStore } from '@/states/vault';
 import { useParams } from 'next/navigation';
-import { TableTxs } from './txs';
+import { TableTxs } from './records';
+import { StatusPhase } from './status';
 
 export const Content: IComponent = () => {
   const param = useParams<{ id: string }>();
@@ -68,8 +69,14 @@ export const Content: IComponent = () => {
             customData={customData}
           />
         </div>
+
+        <StatusPhase
+          vaultId={id as `0x${string}`}
+          buttonType={Date.now() > contributeEnd ? 'Claim' : 'Contribute'}
+        />
       </div>
-      <TableTxs />
+      {Date.now() > contributeEnd && <TableTxs vaultId={id as `0x${string}`} recordType="Claim" />}
+      <TableTxs vaultId={id as `0x${string}`} recordType="Contribute" />
     </section>
   );
 };

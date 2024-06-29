@@ -90,8 +90,8 @@ export const useVaultStore = create<IVaultState>()(
                 uuid: uid,
                 name: values[0] as string,
                 description: values[1] as string,
-                contributeStart: values[2] as bigint,
-                contributeEnd: values[3] as bigint,
+                contributeStart: (values[2] as bigint) * 1000n,
+                contributeEnd: (values[3] as bigint) * 1000n,
                 validationSchemaUID: validationUID,
                 attesters: values[5] as THexString[],
                 operators: values[6] as number[],
@@ -101,6 +101,7 @@ export const useVaultStore = create<IVaultState>()(
                 percentage: values[10] as bigint,
                 customData: values[11] as THexString,
                 validationSchema: sr.schema,
+                time: rsp.time,
               };
               set((state) => ({
                 vaults: {
@@ -141,7 +142,7 @@ export const useVaultStore = create<IVaultState>()(
       },
       getAllOfVaults: () => {
         const vaults = Object.values(get().vaults).map(deserializeVault);
-        return vaults.sort((a, b) => Number(b.contributeEnd) - Number(a.contributeEnd));
+        return vaults.sort((a, b) => Number(b.time) - Number(a.time));
       },
     }),
     {

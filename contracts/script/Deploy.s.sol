@@ -44,7 +44,7 @@ contract DeploySmartVault is BaseScript {
                     expirationTime: 0,
                     revocable: false,
                     refUID: 0,
-                    data: abi.encode(broadcaster, "Vault Informaton"),
+                    data: abi.encode(vaultSchema, "Vault Informaton"),
                     value: 0
                 })
             )

@@ -114,6 +114,10 @@ contract SmartVault is ISmartVault {
 
     /// @notice ISmartVault
     function contribute(bytes32 vaultId) external payable {
+        if (msg.value == 0) {
+            revert ZeroContribution();
+        }
+
         Attestation memory attestation = _eas.getAttestation(vaultId);
         if (attestation.uid != vaultId) {
             revert VaultNotFound();
