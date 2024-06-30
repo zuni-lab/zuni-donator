@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang={params.lang}>
-      <body className={`dark bg-black ${robotoMono.className}`}>
+      <body className={`${robotoMono.className}`}>
         <Suspense>
           <ProgressBarClient />
           <ToastContainer position="bottom-right" newestOnTop />

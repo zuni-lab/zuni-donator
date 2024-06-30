@@ -7,7 +7,7 @@ import { LogoSvg } from './icons/LogoSvg';
 
 export const Footer: IComponent = () => {
   return (
-    <footer className="bg-black">
+    <footer className="bg-accent">
       <div className="section py-20 !min-h-max">
         <div className="container mx-auto flex w-full flex-col justify-between gap-16 px-8 md:flex-row">
           <div className="flex flex-col justify-between">

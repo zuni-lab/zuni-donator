@@ -9,7 +9,7 @@ export default function ValutPage() {
   return (
     <main>
       <Heading
-        title="Our Vaults"
+        title="Zuni Vaults"
         description="Explore the one that best suits your needs."
         size="md"
       />

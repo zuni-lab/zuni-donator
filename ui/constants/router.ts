@@ -2,7 +2,7 @@ import { usePathname } from 'next/navigation';
 
 export const AppRouter = {
   Home: '/',
-  About: '/#about',
+  About: '/about',
   Vaults: '/vaults',
   Policy: '/policy',
   Documentation: '/docs',
