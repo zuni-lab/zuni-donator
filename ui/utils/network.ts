@@ -1,6 +1,4 @@
-import { ProjectENV } from '@env';
-import { baseSepolia } from 'viem/chains';
-import { base } from 'wagmi/chains';
+import { base, baseSepolia } from 'wagmi/chains';
 
 type TNetwork = 'base' | 'baseSepolia';
 type TNetworkConfig = {
@@ -19,5 +17,15 @@ export const Networks: Record<TNetwork, TNetworkConfig> = {
   },
 };
 
-export const defaultNetworkConfig =
-  ProjectENV.NEXT_PUBLIC_ENV === 'development' ? Networks.baseSepolia : Networks.base;
+export const getNetworkConfig = (chainId: number) => {
+  let networkConfig: TNetworkConfig;
+  if (chainId === base.id) {
+    networkConfig = Networks['base'];
+  } else {
+    networkConfig = Networks['baseSepolia'];
+  }
+  return networkConfig;
+};
+
+// export const networkConfig =
+//   ProjectENV.NEXT_PUBLIC_ENV === 'development' ? Networks.baseSepolia : Networks.base;

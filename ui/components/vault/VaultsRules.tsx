@@ -1,10 +1,12 @@
-import { defaultNetworkConfig } from '@/utils/network';
+import { getNetworkConfig } from '@/utils/network';
 import { cx } from '@/utils/tools';
 import { RuleOperators, getOperator, getOperatorLabel } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
 import { isSupportedType } from '@/utils/vaults/types';
+import { wagmiConfig } from '@/utils/wagmi';
 import Link from 'next/link';
 import { decodeAbiParameters } from 'viem';
+import { usePublicClient } from 'wagmi';
 
 export const RuleItem: IComponent<{
   type: string;
@@ -70,6 +72,8 @@ export const VaultRules: IComponent<{
   operators: number[];
   thresholds: THexString[];
 }> = ({ uid, schema, operators, thresholds }) => {
+  const publicClient = usePublicClient({ config: wagmiConfig });
+  const networkConfig = getNetworkConfig(publicClient.chain.id);
   const splittedValidationSchema = splitValidationSchema(schema);
 
   return (
@@ -80,7 +84,7 @@ export const VaultRules: IComponent<{
         </h3>
         <p className="inline-flex gap-2">
           Scan now on EAS explorer:
-          <Link href={`${defaultNetworkConfig.easScan}/schema/view/${uid}`} passHref legacyBehavior>
+          <Link href={`${networkConfig.easScan}/schema/view/${uid}`} passHref legacyBehavior>
             <a className="text-primary underline line-clamp-1" target="_blank">
               {uid}
             </a>

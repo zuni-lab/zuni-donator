@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/shadcn/Table';
 import { SMART_VAULT_ABI } from '@/constants/abi';
-import { defaultNetworkConfig } from '@/utils/network';
+import { getNetworkConfig } from '@/utils/network';
 import { getForrmattedFullDate } from '@/utils/tools';
 import { wagmiConfig } from '@/utils/wagmi';
 import { ProjectENV } from '@env';
@@ -49,6 +49,7 @@ export const TableTxs: IComponent<{
 }> = ({ vaultId, recordType }) => {
   const publicClient = usePublicClient({ config: wagmiConfig });
   const [records, setRecords] = useState<Record[]>([]);
+  const networkConfig = getNetworkConfig(publicClient.chain.id);
 
   const convertBlockNumberToTime = (blockNumber: bigint) => {
     const blockRef = 11800000;
@@ -155,7 +156,7 @@ export const TableTxs: IComponent<{
               <TableCell className="font-medium">
                 <div className="text-gray-400 flex items-center gap-2">
                   <Link
-                    href={`${defaultNetworkConfig.blockExplorers.default.url}/tx/${record.txHash}`}
+                    href={`${networkConfig.blockExplorers.default.url}/tx/${record.txHash}`}
                     passHref
                     legacyBehavior>
                     <a className="text-primary underline line-clamp-1" target="_blank">
@@ -179,7 +180,7 @@ export const TableTxs: IComponent<{
                 {!isContribution(record) && (
                   <div className="text-gray-400 flex items-center gap-2">
                     <Link
-                      href={`${defaultNetworkConfig.easScan}/attestation/view/${record.validation}`}
+                      href={`${networkConfig.easScan}/attestation/view/${record.validation}`}
                       passHref
                       legacyBehavior>
                       <a className="text-primary underline line-clamp-1" target="_blank">
@@ -195,7 +196,7 @@ export const TableTxs: IComponent<{
               <TableCell>
                 <div className="text-gray-400 flex items-center gap-2">
                   <Link
-                    href={`${defaultNetworkConfig.easScan}/attestation/view/${record.attestation}`}
+                    href={`${networkConfig.easScan}/attestation/view/${record.attestation}`}
                     passHref
                     legacyBehavior>
                     <a className="text-primary underline line-clamp-1" target="_blank">

@@ -8,14 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/Card';
-import { defaultNetworkConfig } from '@/utils/network';
+import { getNetworkConfig } from '@/utils/network';
 import { getForrmattedFullDate, isValidAddress } from '@/utils/tools';
 import { ClaimType } from '@/utils/vaults/claim';
 import { RuleOperators, getShortOperator } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
+import { wagmiConfig } from '@/utils/wagmi';
 import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { decodeAbiParameters } from 'viem';
+import { usePublicClient } from 'wagmi';
 
 export const VaultCard: IComponent<TVault> = ({
   uuid,
@@ -31,7 +33,10 @@ export const VaultCard: IComponent<TVault> = ({
   percentage,
   validationSchema,
 }) => {
+  const publicClient = usePublicClient({ config: wagmiConfig });
+  const networkConfig = getNetworkConfig(publicClient.chain.id);
   const splittedValidationSchema = splitValidationSchema(validationSchema);
+
   return (
     <CardContainer
       title={name}
@@ -70,7 +75,7 @@ export const VaultCard: IComponent<TVault> = ({
         <div>
           <h3 className="text-white">Valid attestation: </h3>
           <Link
-            href={`${defaultNetworkConfig.easScan}/schema/view/${validationSchemaUID}`}
+            href={`${networkConfig.easScan}/schema/view/${validationSchemaUID}`}
             passHref
             legacyBehavior>
             <a className="text-primary underline line-clamp-1 mt-2" target="_blank">
