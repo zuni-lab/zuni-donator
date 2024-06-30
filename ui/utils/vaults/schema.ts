@@ -114,29 +114,26 @@ export const RuleSchema: Record<TRuleType, any> = {
     .optional(),
 } as const;
 
-export const validateField = (
-  type: TRuleType,
-  value: string
-): [boolean, number | string | boolean | bigint | undefined, string] => {
+export const validateField = (type: TRuleType, value: string): [boolean, string] => {
   if (isNumericType(type)) {
     const num = parseInt(value, 10);
     if (isNaN(num)) {
-      return [false, undefined, 'Must be a valid number'];
+      return [false, 'Must be a valid number'];
     }
     const min = getMinValue(type);
     const max = getMaxValue(type);
     const result = num >= min && num <= max;
-    return [result, num, result ? '' : `Must be a number between ${min} and ${max}`];
+    return [result, result ? '' : `Must be a number between ${min} and ${max}`];
   } else if (isBytesType(type)) {
-    return [isNBytesValue(type, value), value, 'Must be a valid bytes string'];
+    return [isNBytesValue(type, value), 'Must be a valid bytes string'];
   } else if (type === 'address') {
-    return [isValidAddress(value), value, 'Must be a valid address'];
+    return [isValidAddress(value), 'Must be a valid address'];
   } else if (type === 'bool') {
-    return [value === 'true' || value === 'false', value === 'true', 'Must be a valid boolean'];
+    return [value === 'true' || value === 'false', 'Must be a valid boolean'];
   } else {
     // string is always valid
   }
-  return [true, undefined, ''];
+  return [true, ''];
 };
 
 export const splitValidationSchema = (schema: string): [string, string][] => {

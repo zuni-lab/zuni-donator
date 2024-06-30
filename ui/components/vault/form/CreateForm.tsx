@@ -323,15 +323,15 @@ export const CreateVaultForm: IComponent = () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const value = (values as any)[ruleName];
-      const [valid, parsedValue, msg] = validateField(rule.type, value);
-      if (!valid || !parsedValue) {
+      const [valid, msg] = validateField(rule.type, value);
+      if (!valid) {
         form.setError(ruleName, { message: msg });
         isError = true;
         return;
       }
-
       ops.push(op);
-      const encodedValue = encodeAbiParameters([{ type: rule.type, parsedValue }], [parsedValue]);
+
+      const encodedValue = encodeAbiParameters([{ type: rule.type, value }], [value]);
       thresholds.push(encodedValue);
     });
 
