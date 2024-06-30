@@ -60,7 +60,7 @@ export const Vault: IComponent<{
     args: [id as THexString],
   });
 
-  const { data: vaultBalance } = useReadContract({
+  const { data: vaultBalance, refetch: refetchVaultBalance } = useReadContract({
     address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
     abi: SMART_VAULT_ABI,
     scopeKey: 'vaultBalance',
@@ -79,6 +79,7 @@ export const Vault: IComponent<{
       const vaultId = logs[0].args.vaultId;
       if (vaultId === id) {
         refetch();
+        refetchVaultBalance();
       }
     },
   });
@@ -116,30 +117,29 @@ export const Vault: IComponent<{
             Raised amount: <span className="text-white italic">{toEthers(vaultRaised)} ETH</span>
           </h3>
         )}
-        {currentPhase === 'claim' ||
-          (currentPhase === 'ended' &&
-            (() => {
-              const burned = (Number(vaultRaised) - Number(vaultBalance)) / 1e18;
-              const progress = Math.floor((burned / toEthers(vaultRaised)) * 100);
-              return (
-                <div className="mt-3">
-                  <p className="text-lg font-semibold mb-2">
-                    Progress: {progress}% ({burned} / {toEthers(vaultRaised)} ETH)
-                  </p>
-                  <Progress
-                    value={progress}
-                    barClassName="bg-green-600"
-                    className="w-full rounded-lg h-2 bg-[#ddd]"
-                  />
-                </div>
-              );
-            })())}
+        {(currentPhase === 'claim' || currentPhase === 'ended') &&
+          (() => {
+            const burned = (Number(vaultRaised) - Number(vaultBalance)) / 1e18;
+            const progress = Math.floor((burned / toEthers(vaultRaised)) * 100);
+            return (
+              <div className="mt-3">
+                <p className="text-lg font-semibold mb-2">
+                  Progress: {progress || 0}% ({burned || 0} / {toEthers(vaultRaised)} ETH)
+                </p>
+                <Progress
+                  value={progress}
+                  barClassName="bg-green-600"
+                  className="w-full rounded-lg h-2 bg-[#ddd]"
+                />
+              </div>
+            );
+          })()}
       </div>
     );
   }, [currentPhase, vaultRaised, vaultBalance]);
 
   return (
-    <section className="flex flex-col gap-12">
+    <section className="flex flex-col gap-40 pb-80">
       <div className=" glass rounded-xl p-8 flex flex-col gap-4 text-gray-400">
         <div className="w-full flex justify-between gap-4 items-start">
           <div className="space-y-2">
