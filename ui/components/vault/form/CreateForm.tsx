@@ -6,7 +6,7 @@ import { Input } from '@/shadcn/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shadcn/Select';
 
 import { SMART_VAULT_ABI } from '@/constants/abi';
-import { useActionDebounce } from '@/hooks/useAction';
+import { useActionDebounce, useOverflowDetection } from '@/hooks/useAction';
 import {
   getValidationSchema,
   isUnsupportedRule,
@@ -17,19 +17,18 @@ import { getMaxValue, isNumericType } from '@/utils/vaults/types';
 import { ClaimType, isValidType } from '@/vaults/claim';
 import { RuleOperators, getOperatorLabel, getOperatorNumber } from '@/vaults/operators';
 
+import { TooltipWrapper } from '@/components/TooltipWrapper';
+import { TxDialog } from '@/components/vault/TxDialog';
+import { useSchemaRegistry } from '@/hooks/useSchemaRegisty';
 import { isValidAddress, isValidBytesWithLength, isValidFloat, toUtcTime } from '@/utils/tools';
 import { ProjectENV } from '@env';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cx } from 'class-variance-authority';
-import { Loader, ShieldBan, ShieldCheck, TrashIcon } from 'lucide-react';
+import { ChevronDown, Loader, ShieldBan, ShieldCheck, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { encodeAbiParameters } from 'viem';
 import { BaseError, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-
-import { TooltipWrapper } from '@/components/TooltipWrapper';
-import { TxDialog } from '@/components/vault/TxDialog';
-import { useSchemaRegistry } from '@/hooks/useSchemaRegisty';
 import { z } from 'zod';
 
 const now = new Date().getTime(); // Current time in milliseconds
@@ -112,6 +111,9 @@ export const CreateVaultForm: IComponent = () => {
 
   const [dynamicSchema, setDynamicSchema] = useState(z.object({}));
   const [parsedRules, setParsedRules] = useState<TRule[]>([]);
+
+  const [containerRef, isOverflowing] = useOverflowDetection(parsedRules.length);
+
   const [loading, setLoading] = useState<boolean>(false);
   const {
     data: hash,
@@ -182,6 +184,8 @@ export const CreateVaultForm: IComponent = () => {
     name: '_zuni_smv_attesters' as never,
     keyName: 'key',
   });
+
+  const [fieldsContainerRef, isFieldsOverflowing] = useOverflowDetection(fields.length);
 
   const handleAddAttester = useCallback(() => {
     append('0x76639B0EC8a5f61061c0Dd8C2a915F800af40a65');
@@ -532,7 +536,7 @@ export const CreateVaultForm: IComponent = () => {
                         {...field}
                         disabled={isDisable}
                         value={isDisable ? '' : field.value}
-                        placeholder={`The value of ${rule.name} threshold`}
+                        placeholder={`Enter ${rule.name} threshold`}
                         className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
                       />
                     );
@@ -560,7 +564,7 @@ export const CreateVaultForm: IComponent = () => {
                       {...field}
                       disabled={isDisable}
                       value={isDisable ? '' : field.value}
-                      placeholder={`The value of ${rule.name} threshold`}
+                      placeholder={`Enter ${rule.name} threshold`}
                       className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
                     />
                   );
@@ -589,17 +593,17 @@ export const CreateVaultForm: IComponent = () => {
               className={cx({
                 'col-span-2': !isValidType(watchClaimType),
               })}>
-              <FormLabel required>Type of claim</FormLabel>
+              <FormLabel required>Claim amount</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="bg-white focus:ring-blue-300 border-blue-400 [&>*]:text-gray-700">
-                    <SelectValue placeholder="Type of claim" />
+                    <SelectValue placeholder="Claim amount" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-white text-gray-700">
                   {Object.keys(ClaimType).map((key) => (
                     <SelectItem key={key} value={key}>
-                      {key}
+                      <span className="capitalize">{key.toLowerCase()}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -661,37 +665,49 @@ export const CreateVaultForm: IComponent = () => {
           placeholder: 'The UID of the validation schema. Eg.0x3a2fa...80a42',
           renderSuffix: renderSchemaStatus,
         })}
-        <div className="space-y-2">
+        <div className="space-y-2 ">
           <FormLabel>Attesters</FormLabel>
-          {fields.map((item, index) => {
-            return (
-              <FormField
-                control={control}
-                name={`_zuni_smv_attesters.${index}` as never}
-                key={item.key}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          {...field}
-                          placeholder="Enter attester's address"
-                          className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleRemoveAttester(index)}>
-                          <TrashIcon className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            );
-          })}
+          <div
+            className="relative !mt-0 max-h-[100px] overflow-y-auto scrollable"
+            ref={fieldsContainerRef}>
+            <div className="space-y-2">
+              {fields.map((item, index) => {
+                return (
+                  <FormField
+                    control={control}
+                    name={`_zuni_smv_attesters.${index}` as never}
+                    key={item.key}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              {...field}
+                              placeholder="Enter attester's address"
+                              className="bg-white !border-[1.5px] !border-solid focus:border-input focus-visible:border-primary text-gray-700"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => handleRemoveAttester(index)}>
+                              <TrashIcon className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
+            </div>
+            {isFieldsOverflowing && (
+              <div className="animate-bounce absolute bottom-0 right-0 transform -translate-x-1/2">
+                <ChevronDown className="w-8 h-6 text-orange-600 bg-white right-0 rounded-xl" />
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-start">
             <Button
               type="button"
@@ -711,25 +727,34 @@ export const CreateVaultForm: IComponent = () => {
 
         {parsedRules.length > 0 && (
           <>
-            <h3 className="text-center font-semibold text-sm text-gray-800 !my-4">
+            <h3 className="text-center font-semibold text-sm text-gray-800 !mt-4">
               Rules of vault
             </h3>
-            <div className="max-h-[45vh] overflow-y-auto space-y-2">
-              {parsedRules.map((rule, index) => {
-                const isSupportedRule = !isUnsupportedRule(rule);
-                return (
-                  <div key={index} className="grid grid-cols-3 gap-2">
-                    <FormLabel
-                      className="col-span-3"
-                      required={isSupportedRule && rule.type !== 'string'}>
-                      {rule.name}
-                      <span className="ml-1 text-gray-500 text-xs">({rule.type})</span>
-                    </FormLabel>
-                    {renderRuleOp(rule)}
-                    {renderRuleValue(rule)}
-                  </div>
-                );
-              })}
+            <div
+              className="max-h-[calc(30vh-40px)] relative overflow-y-auto !mt-0 space-y-2 py-2 scrollable"
+              ref={containerRef}>
+              <div>
+                {parsedRules.map((rule, index) => {
+                  const isSupportedRule = !isUnsupportedRule(rule);
+                  return (
+                    <div key={index} className="grid grid-cols-3 gap-2">
+                      <FormLabel
+                        className="col-span-3"
+                        required={isSupportedRule && rule.type !== 'string'}>
+                        {rule.name}
+                        <span className="ml-1 text-gray-500 text-xs">({rule.type})</span>
+                      </FormLabel>
+                      {renderRuleOp(rule)}
+                      {renderRuleValue(rule)}
+                    </div>
+                  );
+                })}
+              </div>
+              {isOverflowing && (
+                <div className="animate-bounce absolute -bottom-2 right-0 transform -translate-x-1/2 p-2">
+                  <ChevronDown className="w-8 h-6 text-orange-600" />
+                </div>
+              )}
             </div>
           </>
         )}
