@@ -2,13 +2,16 @@ import { ProjectENV } from '@env';
 import { EAS } from '@ethereum-attestation-service/eas-sdk';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
-import { useAlchemyProvider } from './useProvider';
+import { useChainId } from 'wagmi';
+import { useEthersProvider } from './useWagmi';
 
 const easAddress = ProjectENV.NEXT_PUBLIC_EAS_ADDRESS;
 const easCache: { [key: string]: EAS } = {};
 
 export const useEAS = () => {
-  const provider = useAlchemyProvider();
+  const chainId = useChainId();
+  const provider = useEthersProvider({ chainId });
+
   const [eas, setEas] = useState<EAS | null>(null);
   const [error, setError] = useState<string | null>(null);
 

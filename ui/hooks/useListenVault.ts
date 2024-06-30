@@ -1,66 +1,52 @@
+import { SMART_VAULT_ABI } from '@/constants/abi';
 import { useVaultStore } from '@/states/vault';
-import { ethers } from 'ethers';
+import { wagmiConfig } from '@/utils/wagmi';
+import { ProjectENV } from '@env';
 import { useCallback, useEffect } from 'react';
+import { useChainId, usePublicClient } from 'wagmi';
 import { useEAS } from './useEas';
-import { useAlchemyProvider } from './useProvider';
 import { useSchemaRegistry } from './useSchemaRegisty';
+import { useEthersProvider } from './useWagmi';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const useListenVaults = (contractAddress: string, contractAbi: any) => {
-  const provider = useAlchemyProvider();
-  const { registry, error: registryError } = useSchemaRegistry();
-  const { eas, error: easError } = useEAS();
+export const useListenVaults = () => {
+  const chainId = useChainId();
+  const provider = useEthersProvider({ chainId });
+  const { registry } = useSchemaRegistry();
+  const { eas } = useEAS();
+  const publicClient = usePublicClient({ config: wagmiConfig });
   const { fetchVaults } = useVaultStore();
 
   const fetchPastEvents = useCallback(async () => {
     try {
-      if (!provider) {
-        return;
-      }
-      if (registryError || easError) {
-        console.error('Error:', registryError || easError);
-        return;
-      }
+      const events = await publicClient.getContractEvents({
+        address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
+        abi: SMART_VAULT_ABI,
+        eventName: 'CreateVault',
+        fromBlock: 11908090n,
+      });
+
       if (!registry || !eas) {
         return;
       }
 
-      const iface = new ethers.Interface(contractAbi);
-      if (!iface) {
-        throw new Error('Interface not found');
-      }
-      const eventTopic = iface.getEvent('CreateVault')?.topicHash;
-      if (!eventTopic) {
-        throw new Error('Event topic not found');
+      if (events.length === 0) {
+        return;
       }
 
-      const filter = {
-        fromBlock: '0x0',
-        toBlock: 'latest',
-        address: contractAddress,
-        topics: [eventTopic],
-      };
-
-      const pastEvents = await provider.getLogs(filter);
-
-      const pastVaultIds = pastEvents.map((log) => {
-        const parsedLog = iface.parseLog(log);
-        if (!parsedLog) {
-          throw new Error('Error parsing log');
+      const vaultIds: THexString[] = [];
+      events.forEach((event) => {
+        if (event.args?.vaultId) {
+          vaultIds.push(event.args.vaultId);
         }
-        return parsedLog.args.vaultId;
       });
-
-      fetchVaults(pastVaultIds, registry, eas);
+      fetchVaults(vaultIds, registry, eas);
     } catch (error) {
       console.error('Error fetching past events:', error);
     }
-  }, [contractAddress, contractAbi, provider, registry, eas, fetchVaults, registryError, easError]);
+  }, [publicClient, fetchVaults, registry, eas]);
 
   useEffect(() => {
     fetchPastEvents();
-    return () => {
-      provider.removeAllListeners();
-    };
   }, [provider, fetchPastEvents]);
 };

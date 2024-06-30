@@ -2,13 +2,15 @@ import { ProjectENV } from '@env';
 import { SchemaRegistry } from '@ethereum-attestation-service/eas-sdk';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
-import { useAlchemyProvider } from './useProvider';
+import { useChainId } from 'wagmi';
+import { useEthersProvider } from './useWagmi';
 
 const defaultSchemaRegistryAddress = ProjectENV.NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS;
 
 const schemaRegistryCache: { [key: string]: SchemaRegistry } = {};
 export const useSchemaRegistry = () => {
-  const provider = useAlchemyProvider();
+  const chainId = useChainId();
+  const provider = useEthersProvider({ chainId });
   const [registry, setRegistry] = useState<SchemaRegistry | null>(null);
   const [error, setError] = useState<string | null>(null);
 
