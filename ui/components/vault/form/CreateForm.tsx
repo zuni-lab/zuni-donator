@@ -331,15 +331,8 @@ export const CreateVaultForm: IComponent = () => {
       }
 
       ops.push(op);
-
-      if (rule.type === 'bool') {
-        const boolValue = value === 'true';
-        thresholds.push(encodeAbiParameters([{ type: 'bool', value: boolValue }], [boolValue]));
-        return;
-      } else {
-        const encodedValue = encodeAbiParameters([{ type: rule.type, value: value }], [value]);
-        thresholds.push(encodedValue);
-      }
+      const encodedValue = encodeAbiParameters([{ type: rule.type, parsedValue }], [parsedValue]);
+      thresholds.push(encodedValue);
     });
 
     if (isError) {
