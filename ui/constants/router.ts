@@ -12,9 +12,9 @@ export type RouterKey = keyof typeof AppRouter;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const RouterMeta: Record<RouterKey, { title: string; description?: string; icon: any }> = {
-  Home: { title: 'Home', description: 'Zuni Vault', icon: null },
+  Home: { title: 'Home', description: 'Zuni - Smart Vaults', icon: null },
   About: { title: 'About', icon: null },
-  Vaults: { title: 'Vaults', description: 'Explore the vaults', icon: null },
+  Vaults: { title: 'ZUNI - Smart Vaults', description: 'Explore the vaults', icon: null },
   Policy: { title: 'Policy', description: 'Policy', icon: null },
   Documentation: { title: 'Documentation', description: 'Documentation', icon: null },
 };
