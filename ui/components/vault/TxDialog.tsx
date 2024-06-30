@@ -1,6 +1,6 @@
+import { defaultNetworkConfig } from '@/utils/network';
 import { Dialog, DialogDescription } from '@radix-ui/react-dialog';
 import Link from 'next/link';
-import { baseSepolia } from 'viem/chains';
 import { DialogContent, DialogHeader, DialogTitle } from '../shadcn/Dialog';
 
 export const TxDialog: IComponent<{
@@ -25,7 +25,7 @@ export const TxDialog: IComponent<{
         <div className="text-gray-700 text-sm flex flex-col">
           Transaction ID:
           <Link
-            href={`${baseSepolia.blockExplorers.default.url}/tx/${hash}`}
+            href={`${defaultNetworkConfig.blockExplorers.default.url}/tx/${hash}`}
             passHref
             legacyBehavior>
             <a target="_blank" className="text-blue-600 underline text-xs">

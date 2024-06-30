@@ -2,7 +2,10 @@ import { ProjectENV } from '@env';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const ALCHEMY_RPC_URL = `wss://base-sepolia.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`;
+const ALCHEMY_RPC_URL =
+  ProjectENV.NEXT_PUBLIC_ENV === 'development'
+    ? `wss://base-sepolia.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+    : `wss://base-mainnet.g.alchemy.com/v2/${ProjectENV.NEXT_PUBLIC_ALCHEMY_API_KEY}`;
 
 const providerCache: { [key: string]: ethers.WebSocketProvider } = {};
 
@@ -17,7 +20,6 @@ export const useRpcProvider = (rpcUrl: string) => {
 
   const provider = useMemo(() => {
     if (!providerCache[rpcUrl]) {
-      console.log('Connecting to:', rpcUrl);
       const newProvider = new ethers.WebSocketProvider(rpcUrl);
       newProvider.websocket.close = reconnect;
       newProvider.websocket.onerror = (err) => {

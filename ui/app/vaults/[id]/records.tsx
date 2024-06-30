@@ -18,7 +18,7 @@ import { Copy } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { formatEther } from 'viem';
-import { baseSepolia } from 'viem/chains';
+
 import { usePublicClient, useWatchContractEvent } from 'wagmi';
 
 type Contribution = {
@@ -155,7 +155,7 @@ export const TableTxs: IComponent<{
               <TableCell className="font-medium">
                 <div className="text-gray-400 flex items-center gap-2">
                   <Link
-                    href={`${baseSepolia.blockExplorers.default.url}/tx/${record.txHash}`}
+                    href={`${defaultNetworkConfig.blockExplorers.default.url}/tx/${record.txHash}`}
                     passHref
                     legacyBehavior>
                     <a className="text-primary underline line-clamp-1" target="_blank">

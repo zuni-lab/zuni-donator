@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 const ProjectENVSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   /**
    * Feature flags, comma separated
    */
+  NEXT_PUBLIC_ENV: z.string().default('development'),
   NEXT_PUBLIC_SMART_VAULT_ADDRESS: z.string().startsWith('0x').length(42),
   NEXT_PUBLIC_EAS_ADDRESS: z.string().startsWith('0x').length(42),
   NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS: z.string().startsWith('0x').length(42),
@@ -17,6 +17,8 @@ const ProjectENVSchema = z.object({
  * Return system ENV with parsed values
  */
 export const ProjectENV = ProjectENVSchema.parse({
+  NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
+  NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_SMART_VAULT_ADDRESS: process.env.NEXT_PUBLIC_SMART_VAULT_ADDRESS,
   NEXT_PUBLIC_EAS_ADDRESS: process.env.NEXT_PUBLIC_EAS_ADDRESS,
   NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS:
