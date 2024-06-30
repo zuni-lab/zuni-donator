@@ -13,6 +13,7 @@ import { getForrmattedFullDate, isValidAddress } from '@/utils/tools';
 import { ClaimType } from '@/utils/vaults/claim';
 import { RuleOperators, getShortOperator } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
+import { isNumericType } from '@/utils/vaults/types';
 import { wagmiConfig } from '@/utils/wagmi';
 import { ArrowRightIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -103,7 +104,9 @@ export const VaultCard: IComponent<TVault> = ({
                   const value = decodeAbiParameters(abi, thresholds[index])[0] as string;
                   thresholdValue = isValidAddress(value)
                     ? value.slice(0, 4) + '...' + value.slice(-4)
-                    : value;
+                    : isNumericType(type as TRuleType)
+                      ? Number(value).toLocaleString()
+                      : value;
                 }
                 return (
                   <tr
