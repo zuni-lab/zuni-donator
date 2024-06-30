@@ -22,7 +22,9 @@ export const CreateVaultMode: IComponent = () => {
     <>
       <DialogHeader>
         <DialogTitle>Create a new vault</DialogTitle>
-        <DialogDescription>Make changes to your profile here.</DialogDescription>
+        <DialogDescription>
+          Define the rules for your vault and start accepting contributions.
+        </DialogDescription>
       </DialogHeader>
       <CreateVaultForm />
     </>

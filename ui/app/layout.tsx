@@ -21,9 +21,9 @@ export async function generateStaticParams() {
 const robotoMono = Roboto_Mono({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  description: 'Donator',
+  description: 'Defining your own smart vaults with ZUNI.',
   icons: '/favicon.ico',
-  title: 'Donator',
+  title: 'ZUNI - Smart Vault',
 };
 
 export default function RootLayout({
