@@ -1,6 +1,7 @@
 import { Heading } from '@/components/Heading';
 import { RouterMeta } from '@/constants/router';
 import { Metadata } from 'next';
+import { StatSection } from '../sections/StatSection';
 import { PageContent } from './content';
 
 export const metadata: Metadata = RouterMeta.Vaults;
@@ -14,6 +15,7 @@ export default function ValutPage() {
         size="md"
       />
       <PageContent />
+      <StatSection />
     </main>
   );
 }
