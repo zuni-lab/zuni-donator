@@ -11,7 +11,9 @@ export const VaultActions: IComponent<{
   const isInDepositPhase = start < now && now < end;
   return (
     <VaultDialog
-      buttonClassName="hover:bg-accent/60 hover:text-white"
+      buttonClassName={
+        isInDepositPhase ? 'bg-green-700 hover:bg-green-800' : 'bg-rose-500 hover:bg-rose-600'
+      }
       button={isInDepositPhase ? 'Contriubte' : 'Claim'}
       description={isInDepositPhase ? 'Contriubte to vault' : 'Claim from vault'}>
       {isInDepositPhase ? (

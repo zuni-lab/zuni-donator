@@ -53,7 +53,7 @@ export const Content: IComponent = () => {
           />
         </div>
         <hr className="my-4" />
-        <div className="flex flex-col gap-4">
+        <div className="mt-4 flex flex-col gap-8">
           <VaultProgress
             start={Number(contributeStart) * 1000}
             end={Number(contributeEnd) * 1000}
@@ -73,7 +73,9 @@ export const Content: IComponent = () => {
           />
         </div>
       </div>
-      {Date.now() > contributeEnd && <TableTxs vaultId={id as `0x${string}`} recordType="Claim" />}
+      {Date.now() > contributeEnd * 1000n && (
+        <TableTxs vaultId={id as `0x${string}`} recordType="Claim" />
+      )}
       <TableTxs vaultId={id as `0x${string}`} recordType="Contribute" />
     </section>
   );

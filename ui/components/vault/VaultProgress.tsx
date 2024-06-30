@@ -53,7 +53,7 @@ export const VaultProgress: IComponent<{
       </div>
       <div className="flex justify-center w-full gap-1">
         <span>Progress: </span>
-        <span className="text-orange-400">{progress.toFixed(2)}%</span>
+        <span className="text-gray-200 font-medium">{progress.toFixed(0)}%</span>
       </div>
     </div>
   );
