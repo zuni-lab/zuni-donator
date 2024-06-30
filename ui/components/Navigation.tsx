@@ -8,8 +8,8 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/shadcn/Navigation';
-import { LogoSvg } from './icons/LogoSvg';
 import { AppRouter } from '@/constants/router';
+import { LogoSvg } from './icons/LogoSvg';
 
 export const Navigation: IComponent = () => {
   return (
@@ -21,7 +21,7 @@ export const Navigation: IComponent = () => {
         <NavigationMenu>
           <NavigationMenuList>
             {Object.entries(AppRouter)
-              .filter(([k]) => k !== 'Home')
+              .filter(([k]) => k !== 'Home' && k !== 'Vaults')
               .map(([k, v]) => (
                 <NavigationMenuItem key={v}>
                   <Link href={v} passHref legacyBehavior>

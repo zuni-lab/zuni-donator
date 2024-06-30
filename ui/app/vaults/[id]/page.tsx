@@ -1,9 +1,9 @@
-import { Content } from './content';
+import { VaultDetails } from './detail';
 
 export default function Detail() {
   return (
     <main>
-      <Content />
+      <VaultDetails />
     </main>
   );
 }

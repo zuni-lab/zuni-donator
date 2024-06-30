@@ -37,7 +37,7 @@ export const PageContent = () => {
     return (
       <div className="w-[500px] flex items-center float-end bg-background px-2 rounded-md border">
         <Input
-          placeholder="Search by Name / UUID of vaults"
+          placeholder="Search by Name / Schema UID / Vault ID"
           className="focus:!border-none"
           onChange={onSearch}
         />

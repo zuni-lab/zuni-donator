@@ -1,5 +1,5 @@
 import uniqueId from 'lodash/uniqueId';
-import { useState } from 'react';
+import { MutableRefObject, useEffect, useRef, useState } from 'react';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -103,4 +103,31 @@ const useActionDebounce = (
   return onAction;
 };
 
-export { useActionDebounce, useActionThreshold };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const useOverflowDetection: (deps: any) => [MutableRefObject<HTMLDivElement | null>, boolean] = (
+  deps
+) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      const container = containerRef.current;
+      if (container) {
+        const hasOverflow = container.scrollHeight > container.clientHeight;
+        setIsOverflowing(hasOverflow);
+      }
+    };
+
+    checkOverflow(); // Initial check
+    window.addEventListener('resize', checkOverflow); // Recheck on window resize
+
+    return () => {
+      window.removeEventListener('resize', checkOverflow); // Cleanup listener
+    };
+  }, [deps]); // Re-run effect when dependencies change
+
+  return [containerRef, isOverflowing];
+};
+
+export { useActionDebounce, useActionThreshold, useOverflowDetection };

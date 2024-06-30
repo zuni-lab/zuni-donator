@@ -19,39 +19,7 @@ input:focus {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 61 100% 81%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 7.84%;
     --foreground: 210 40% 98%;
 
     --card: 222.2 84% 4.9%;
@@ -78,6 +46,7 @@ input:focus {
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
   }
 }
 
@@ -93,8 +62,29 @@ input:focus {
 .glass {
   -webkit-backdrop-filter: blur(22.5px);
   backdrop-filter: blur(22.5px);
-  background: linear-gradient(137deg, rgb(57 116 244 / 15%), rgba(255, 255, 255, 0));
+  background: linear-gradient(137deg, rgb(57 116 244 / 15%), rgba(255, 255, 255, 0.1));
   box-shadow: 15px 15px 30px 0 #00000014;
+}
+
+.scrollable {
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #76a8ef #e0e0e0;
+  padding-right: 12px;
+}
+
+.scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: #e0e0e0;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
 }
 
 section,

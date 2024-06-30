@@ -6,7 +6,7 @@ export const VaultAttesters: IComponent<{
 }> = ({ attesters }) => {
   return (
     <div>
-      <h3 className="text-white font-semibold text-lg">Attesters:</h3>
+      <h3 className="text-white font-semibold text-lg">Valid attesters:</h3>
       {attesters.length === 0 && (
         <div className="text-gray-400 mt-1 flex items-center gap-2"> - No attesters</div>
       )}

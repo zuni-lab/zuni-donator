@@ -179,5 +179,5 @@ const deserializeVault = (vault: any): TVault => ({
   contributeEnd: BigInt(vault.contributeEnd),
   fixedAmount: BigInt(vault.fixedAmount),
   percentage: BigInt(vault.percentage),
-  time: BigInt(vault.time),
+  time: BigInt(vault.time || 0),
 });

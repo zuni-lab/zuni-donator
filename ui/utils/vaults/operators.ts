@@ -43,6 +43,27 @@ export const getOperator = (n: number): TOperator => {
   }
 };
 
+export const getShortOperator = (n: number): string => {
+  switch (n) {
+    case 0:
+      return 'Equal';
+    case 1:
+      return 'Unequal';
+    case 2:
+      return 'Greater';
+    case 3:
+      return 'Greater Equal';
+    case 4:
+      return 'Less';
+    case 5:
+      return 'Less Equal';
+    case 6:
+      return 'None';
+    default:
+      return '';
+  }
+};
+
 export const getValidOperators = (type: TRuleType): TOperator[] => {
   switch (type) {
     case 'address':
