@@ -16,7 +16,6 @@ export const useListenVaults = () => {
   const { eas } = useEAS();
   const publicClient = usePublicClient({ config: wagmiConfig });
   const { fetchVaults } = useVaultStore();
-
   const fetchPastEvents = useCallback(async () => {
     try {
       const events = await publicClient.getContractEvents({
@@ -40,11 +39,11 @@ export const useListenVaults = () => {
           vaultIds.push(event.args.vaultId);
         }
       });
-      fetchVaults(vaultIds, registry, eas);
+      fetchVaults(chainId, vaultIds, registry, eas);
     } catch (error) {
       console.error('Error fetching past events:', error);
     }
-  }, [publicClient, fetchVaults, registry, eas]);
+  }, [publicClient, chainId, fetchVaults, registry, eas]);
 
   useEffect(() => {
     fetchPastEvents();

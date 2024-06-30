@@ -11,11 +11,12 @@ import { useVaultStore } from '@/states/vault';
 import { ProjectENV } from '@env';
 import { SearchIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { useWatchContractEvent } from 'wagmi';
+import { useChainId, useWatchContractEvent } from 'wagmi';
 import { VaultListSection } from '../sections/VaultListSection';
 
 export const PageContent = () => {
-  const data = useVaultStore((state) => state.getAllOfVaults());
+  const chainId = useChainId();
+  const data = useVaultStore((state) => state.getAllOfVaults(chainId));
   const fetchVaults = useVaultStore((state) => state.fetchVaults);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { registry } = useSchemaRegistry();
@@ -56,7 +57,7 @@ export const PageContent = () => {
       const vaultId = logs[0].args.vaultId;
       if (vaultId) {
         // TODO : check if registry and eas are available
-        fetchVaults([vaultId], registry, eas);
+        fetchVaults(chainId, [vaultId], registry, eas);
       }
     },
   });

@@ -6,7 +6,8 @@ import { useChainId } from 'wagmi';
 import { useEthersProvider } from './useWagmi';
 
 const easAddress = ProjectENV.NEXT_PUBLIC_EAS_ADDRESS;
-const easCache: { [key: string]: EAS } = {};
+
+const easCache: { [chainId: number]: EAS } = {};
 
 export const useEAS = () => {
   const chainId = useChainId();
@@ -17,8 +18,8 @@ export const useEAS = () => {
 
   const loadEas = useCallback(async () => {
     try {
-      if (easCache[easAddress]) {
-        setEas(easCache[easAddress]);
+      if (easCache[chainId]) {
+        setEas(easCache[chainId]);
         return;
       }
 
@@ -27,12 +28,12 @@ export const useEAS = () => {
         await newEas.connect(provider as unknown as ethers.Signer);
       }
 
-      easCache[easAddress] = newEas;
+      easCache[chainId] = newEas;
       setEas(newEas);
     } catch (err) {
       setError(`Failed to load EAS: ${err}`);
     }
-  }, [provider]);
+  }, [chainId, provider]);
 
   useEffect(() => {
     loadEas();

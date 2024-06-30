@@ -12,7 +12,7 @@ import { ProjectENV } from '@env';
 import { cx } from 'class-variance-authority';
 import { useParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
-import { useReadContract, useWatchContractEvent } from 'wagmi';
+import { useChainId, useReadContract, useWatchContractEvent } from 'wagmi';
 import { TableTxs } from './records';
 
 const toEthers = (value?: bigint) => (value ? Number(value) / 1e18 : 0);
@@ -20,9 +20,10 @@ const toEthers = (value?: bigint) => (value ? Number(value) / 1e18 : 0);
 export const VaultDetails: IComponent = () => {
   const param = useParams<{ id: string }>();
   const { getVault } = useVaultStore();
+  const chainId = useChainId();
   if (!param) return null;
   const id = param.id;
-  const vault = getVault(id as THexString);
+  const vault = getVault(chainId, id as THexString);
   if (!vault) {
     return <>Not Found</>;
   }

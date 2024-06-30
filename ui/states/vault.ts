@@ -6,14 +6,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface IVaultState {
-  vaults: Record<THexString, TVault>;
+  vaults: Record<number, Record<THexString, TVault>>; // Nest vaults under chainId
   schema: Record<THexString, string>;
   loading: boolean;
-  addVault: (vault: TVault) => void;
-  getVault: (uuid: THexString) => TVault | undefined;
-  fetchVaults: (uuid: THexString[], registry: SchemaRegistry | null, eas: EAS | null) => void;
-  getComingVaults: (n: number) => TVault[];
-  getAllOfVaults: () => TVault[];
+  getVault: (chainId: number, uuid: THexString) => TVault | undefined;
+  fetchVaults: (
+    chainId: number,
+    uuid: THexString[],
+    registry: SchemaRegistry | null,
+    eas: EAS | null
+  ) => void;
+  getComingVaults: (chainId: number, n: number) => TVault[];
+  getAllOfVaults: (chainId: number) => TVault[];
 }
 
 export const useVaultStore = create<IVaultState>()(
@@ -22,24 +26,15 @@ export const useVaultStore = create<IVaultState>()(
       vaults: {},
       schema: {},
       loading: false,
-      addVault: (vault) => {
-        const serializedVault = serializeVault(vault);
-        set((state) => ({
-          vaults: {
-            ...state.vaults,
-            [vault.uuid]: serializedVault,
-          },
-        }));
-      },
-      getVault: (uuid) => {
-        const vault = get().vaults[uuid];
+      getVault: (chainId, uuid) => {
+        const vault = get().vaults[chainId]?.[uuid];
         return vault ? deserializeVault(vault) : undefined;
       },
-      fetchVaults: async (newVaultIds, registry, eas) => {
+      fetchVaults: async (chainId, newVaultIds, registry, eas) => {
         try {
           set({ loading: true });
 
-          const vaultIds = newVaultIds.filter((id) => !get().vaults[id]);
+          const vaultIds = newVaultIds.filter((id) => !get().vaults[chainId]?.[id]);
 
           if (!vaultIds.length) {
             return;
@@ -117,7 +112,10 @@ export const useVaultStore = create<IVaultState>()(
               set((state) => ({
                 vaults: {
                   ...state.vaults,
-                  [uid]: serializeVault(vault),
+                  [chainId]: {
+                    ...state.vaults[chainId],
+                    [uid]: serializeVault(vault),
+                  },
                 },
               }));
 
@@ -134,25 +132,25 @@ export const useVaultStore = create<IVaultState>()(
           console.error('Error fetching vault:', error);
         }
       },
-      getComingVaults: (n) => {
-        const vaults = Object.values(get().vaults).map(deserializeVault);
+      getComingVaults: (chainId, n) => {
+        const vaults = Object.values(get().vaults[chainId] || {}).map(deserializeVault);
         const length = Object.keys(vaults).length;
         if (length === 0) {
           return [];
         }
 
         if (length <= n) {
-          return Object.values(get().vaults);
+          return vaults;
         }
 
-        const sortedVaults = Object.values(get().vaults).sort(
+        const sortedVaults = vaults.sort(
           (a, b) => Number(b.contributeEnd) - Number(a.contributeEnd)
         );
 
         return sortedVaults.slice(0, n);
       },
-      getAllOfVaults: () => {
-        const vaults = Object.values(get().vaults).map(deserializeVault);
+      getAllOfVaults: (chainId) => {
+        const vaults = Object.values(get().vaults[chainId] || {}).map(deserializeVault);
         return vaults.sort((a, b) => Number(b.time) - Number(a.time));
       },
     }),
