@@ -58,7 +58,6 @@ export default function HomePage() {
       </section>
       {/* <div className="my-12 h-[2px] max-w-6xl mx-auto bg-white"></div> */}
       {/* <RecentVaultSection /> */}
-
     </main>
   );
 }

@@ -74,7 +74,7 @@ export const VaultDialog: IComponent<{
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className={cx('border border-blue-400', buttonClassName)}>
+        <Button size={'lg'} className={cx('border-blue-400', buttonClassName)}>
           {button}
         </Button>
       </DialogTrigger>
