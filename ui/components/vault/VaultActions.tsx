@@ -1,26 +1,34 @@
 import { ClaimVaultMode, ContributeVaultMode, VaultDialog } from './VaultDialog';
 
+export type TVaultMode = 'contribute' | 'claim' | 'upcoming' | 'ended';
+
 export const VaultActions: IComponent<{
   vaultName: string;
   vaultId: THexString;
   schemaUID: THexString;
-  start: number;
-  end: number;
-}> = ({ vaultId, vaultName, schemaUID, start, end }) => {
-  const now = Date.now() / 1000;
-  const isInDepositPhase = start < now && now < end;
+  mode?: TVaultMode;
+}> = ({ vaultId, vaultName, schemaUID, mode = 'upcoming' }) => {
+  if (mode === 'ended' || mode === 'upcoming') {
+    return null;
+  }
+
+  if (mode === 'contribute') {
+    return (
+      <VaultDialog
+        buttonClassName={'bg-orange-400 hover:bg-orange-500'}
+        button={'Contriubte'}
+        description={'Contriubte to vault'}>
+        <ContributeVaultMode vaultId={vaultId} vaultName={vaultName} />
+      </VaultDialog>
+    );
+  }
+
   return (
     <VaultDialog
-      buttonClassName={
-        isInDepositPhase ? 'bg-green-700 hover:bg-green-800' : 'bg-rose-500 hover:bg-rose-600'
-      }
-      button={isInDepositPhase ? 'Contriubte' : 'Claim'}
-      description={isInDepositPhase ? 'Contriubte to vault' : 'Claim from vault'}>
-      {isInDepositPhase ? (
-        <ContributeVaultMode vaultId={vaultId} vaultName={vaultName} />
-      ) : (
-        <ClaimVaultMode vaultId={vaultId} vaultName={vaultName} schemaUID={schemaUID} />
-      )}
+      buttonClassName={'bg-primary hover:bg-blue-600'}
+      button={'Claim'}
+      description={'Claim from vault'}>
+      <ClaimVaultMode vaultId={vaultId} vaultName={vaultName} schemaUID={schemaUID} />
     </VaultDialog>
   );
 };

@@ -32,7 +32,7 @@ import { BaseError, useWaitForTransactionReceipt, useWriteContract } from 'wagmi
 import { z } from 'zod';
 
 const now = new Date().getTime(); // Current time in milliseconds
-const tenMinutesLater = new Date(now + 10 * 60 * 1000); // 10 minutes later
+const tenMinutesLater = new Date(now + 0 * 60 * 1000); // 5 minutes later
 const EMPTY_HEX_DATA = encodeAbiParameters([{ type: 'bytes' }], ['0x00']);
 
 const latterThanCurrentTimeTenMinutes = (msg: string) =>
@@ -60,10 +60,10 @@ const baseFormSchema = z.object({
     .transform((val) => val.trim())
     .refine((val) => val.length > 0, 'Description is required'),
   _zuni_smv_depositStart: latterThanCurrentTimeTenMinutes(
-    'Deposit start must be at least 10 minutes in the future'
+    'Contribute start must be at least 5 minutes in the future'
   ),
   _zuni_smv_depositEnd: latterThanCurrentTimeTenMinutes(
-    'Deposit end must be at least 10 minutes in the future'
+    'Contribute end must be at least 5 minutes in the future'
   ),
   _zuni_smv_claimType: z.enum(['FIXED', 'PERCENTAGE'], { message: 'Claim type is required' }),
   _zuni_smv_claimAmount: z.string().optional(),
@@ -133,7 +133,7 @@ export const CreateVaultForm: IComponent = () => {
         return depositStart < depositEnd;
       },
       {
-        message: 'Deposit end must be greater than deposit start',
+        message: 'Contribute end must be greater than deposit start',
         path: ['_zuni_smv_depositEnd'],
       }
     )
@@ -647,14 +647,14 @@ export const CreateVaultForm: IComponent = () => {
         <div className="grid grid-cols-2 gap-2">
           {renderInputField({
             name: '_zuni_smv_depositStart',
-            label: 'Deposit start (UTC)',
-            placeholder: 'The start of the deposit period',
+            label: 'Contribute start (UTC)',
+            placeholder: 'The start of the contribute period',
             type: 'datetime-local',
           })}
           {renderInputField({
             name: '_zuni_smv_depositEnd',
-            label: 'Deposit end (UTC)',
-            placeholder: 'The end of the deposit period',
+            label: 'Contribute end (UTC)',
+            placeholder: 'The end of the contribute period',
             type: 'datetime-local',
           })}
         </div>

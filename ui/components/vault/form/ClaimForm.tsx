@@ -118,10 +118,6 @@ export const ClaimVaultForm: IComponent<{
       return;
     }
 
-    console.log({
-      id: values.attestationUID,
-    });
-
     writeContract({
       address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
       abi: SMART_VAULT_ABI,
@@ -147,8 +143,6 @@ export const ClaimVaultForm: IComponent<{
       </TooltipWrapper>
     );
   }, [isValidAttestation, loading]);
-
-  console.log({ writeCallError });
 
   return (
     <Form {...form}>
@@ -183,10 +177,7 @@ export const ClaimVaultForm: IComponent<{
           )}
         />
         <div className="flex items-center justify-center !mt-4">
-          <Button
-            type="submit"
-            className="px-4 bg-rose-500 hover:bg-rose-600"
-            disabled={isPending || isConfirming}>
+          <Button type="submit" className="px-4" disabled={isPending || isConfirming}>
             {isPending || isConfirming ? (
               <Loader className="w-4 h-4 text-background animate-spin" />
             ) : (
@@ -197,8 +188,7 @@ export const ClaimVaultForm: IComponent<{
         {<TxDialog hash={hashState as string} onClose={() => setHash('')} />}
         {writeCallError && (
           <div className="text-destructive text-sm">
-            {(writeCallError as BaseError).metaMessages?.[0] ||
-              'An error occurred while claiming funds'}
+            {(writeCallError as BaseError).shortMessage || 'An error occurred while claiming funds'}
           </div>
         )}
       </form>

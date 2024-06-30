@@ -106,7 +106,7 @@ export const ContributeVaultForm: IComponent<{
         <div className="flex items-center justify-center !mt-4">
           <Button
             type="submit"
-            className="px-4 bg-green-700 hover:bg-green-800"
+            className="px-4 bg-orange-400 hover:bg-orange-500"
             disabled={isPending || isConfirming}>
             {isPending || isConfirming ? (
               <Loader className="w-4 h-4 text-background animate-spin" />

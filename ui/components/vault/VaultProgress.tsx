@@ -37,13 +37,13 @@ export const VaultProgress: IComponent<{
   return (
     <div className="w-full flex flex-wrap justify-between items-center gap-2">
       <div className="font-semibold">
-        <span className="text-gray-200 text-lg">Date start</span>
+        <span className="text-gray-200 text-lg">Contribute start</span>
         <div className="text-gray-400">
           {start === 0 ? 'N/A' : getForrmattedFullDate(Number(start))} (UTC)
         </div>
       </div>
       <div className="font-semibold text-right">
-        <span className="text-gray-200 text-lg">Date end</span>
+        <span className="text-gray-200 text-lg">Contribute end</span>
         <div className="text-gray-400">
           {end === 0 ? 'N/A' : getForrmattedFullDate(Number(end))} (UTC)
         </div>
