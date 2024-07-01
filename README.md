@@ -1,4 +1,5 @@
-ZUNI SMART VAULT - Fundraising Evolved - Control, Transparency, and Real-World Results
+# ZUNI SMART VAULT 
+> Fundraising Evolved - Control, Transparency, and Real-World Results
 
 # Overview
 
@@ -111,6 +112,29 @@ zuni-smart-vault/
    git clone git@github.com:zuni-lab/zuni-smart-vault.git
    ```
 
+2. Copy `.env.example` to `.env`:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+3. Add `.env` file with the following content:
+    - `NEXT_PUBLIC_EAS_ADDRESS`: Ethereum Attestation Service address
+    - `NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS`: Schema Registry contract address
+    - `NEXT_PUBLIC_SMART_VAULT_ADDRESS`: Smart Vault contract address
+    - `NEXT_PUBLIC_VAULT_SCHEMA_UUID`: Vault schema UUID on EAS
+    - `NEXT_PUBLIC_WALLET_CONNECT_ENV_ID`: Dynamic Wallet Connect environment ID
+    - `NEXT_PUBLIC_ALCHEMY_API_KEY`: Alchemy API key
+
+    - Eg: on Base network
+    ```sh
+    NEXT_PUBLIC_EAS_ADDRESS=0x4200000000000000000000000000000000000021
+    NEXT_PUBLIC_SCHEMA_REGISTRY_CONTRACT_ADDRESS=0x4200000000000000000000000000000000000020
+    NEXT_PUBLIC_SMART_VAULT_ADDRESS=0x365be3e45B591423E5b867A7dE04ccEA67ca67e7
+    NEXT_PUBLIC_VAULT_SCHEMA_UUID=0xed7706fecfa661e98b5c8bd39672fa4e12ad2013bef191f65bab88ad7929a5ea
+    NEXT_PUBLIC_WALLET_CONNECT_ENV_ID=719c2407-cf7c-4350-aec7-f49de1d7bb0c
+    NEXT_PUBLIC_ALCHEMY_API_KEY=_kri18bG3_Mlmbk0h1P53dFZXPgH0AYe
+    ```
 # UI
 
 ## Project commands
