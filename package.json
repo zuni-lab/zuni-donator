@@ -9,7 +9,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "bun --filter='ui' dev",
-    "build": "bun --filter='ui' build",
+    "build": "bun --filter='ui' run build",
     "start": "bun --filter='ui' start",
     "lint": "bun --filter='ui' run lint"
   },
