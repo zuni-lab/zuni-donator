@@ -144,8 +144,6 @@ export const ClaimVaultForm: IComponent<{
     );
   }, [isValidAttestation, loading]);
 
-  console.log({ writeCallError });
-
   return (
     <Form {...form}>
       <form onSubmit={handlePressSubmit} className="space-y-2">

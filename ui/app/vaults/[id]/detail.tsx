@@ -6,13 +6,12 @@ import { VaultAttesters } from '@/components/vault/VaultAttesters';
 import { VaultClaim } from '@/components/vault/VaultClaim';
 import { VaultProgress } from '@/components/vault/VaultProgress';
 import { VaultRules } from '@/components/vault/VaultsRules';
-import { SMART_VAULT_ABI } from '@/constants/abi';
+import { useVaultContract } from '@/hooks/useVaultContract';
 import { useVaultStore } from '@/states/vault';
-import { ProjectENV } from '@env';
 import { cx } from 'class-variance-authority';
 import { useParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
-import { useChainId, useReadContract, useWatchContractEvent } from 'wagmi';
+import { useChainId } from 'wagmi';
 import { TableTxs } from './records';
 
 const toEthers = (value?: bigint) => (value ? Number(value) / 1e18 : 0);
@@ -52,37 +51,7 @@ export const Vault: IComponent<{
   } = vault;
   const now = Date.now() / 1000;
 
-  const { data: vaultRaised, refetch } = useReadContract({
-    address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
-    abi: SMART_VAULT_ABI,
-    scopeKey: 'vaultRaised',
-    functionName: 'vaultRaised',
-    args: [id as THexString],
-  });
-
-  const { data: vaultBalance, refetch: refetchVaultBalance } = useReadContract({
-    address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
-    abi: SMART_VAULT_ABI,
-    scopeKey: 'vaultBalance',
-    functionName: 'vaultBalance',
-    args: [id as THexString],
-    query: {
-      enabled: now > Number(contributeEnd),
-    },
-  });
-
-  useWatchContractEvent({
-    address: ProjectENV.NEXT_PUBLIC_SMART_VAULT_ADDRESS as THexString,
-    abi: SMART_VAULT_ABI,
-    eventName: 'Contribute',
-    onLogs(logs) {
-      const vaultId = logs[0].args.vaultId;
-      if (vaultId === id) {
-        refetch();
-        refetchVaultBalance();
-      }
-    },
-  });
+  const { vaultRaised, vaultBalance } = useVaultContract(id, contributeEnd, now);
 
   const currentPhase = useMemo(() => {
     if (now < Number(contributeStart)) {

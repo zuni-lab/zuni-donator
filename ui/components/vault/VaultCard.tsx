@@ -65,7 +65,7 @@ export const VaultCard: IComponent<TVault> = ({
             ) : (
               <>
                 <span className="text-white">Percentage</span>
-                <span className="text-blue-500 text-right">{Number(percentage) / 1e18}%</span>
+                <span className="text-blue-500 text-right">{Number(percentage) / 1e16}%</span>
               </>
             )}
           </div>

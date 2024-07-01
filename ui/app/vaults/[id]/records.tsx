@@ -10,16 +10,19 @@ import {
   TableRow,
 } from '@/components/shadcn/Table';
 import { SMART_VAULT_ABI } from '@/constants/abi';
+import { useVaultContract } from '@/hooks/useVaultContract';
+import { useVaultStore } from '@/states/vault';
 import { getNetworkConfig } from '@/utils/network';
 import { getForrmattedFullDate } from '@/utils/tools';
 import { wagmiConfig } from '@/utils/wagmi';
 import { ProjectENV } from '@env';
+import { useQueryClient } from '@tanstack/react-query';
 import { Copy } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { formatEther } from 'viem';
 
-import { usePublicClient, useWatchContractEvent } from 'wagmi';
+import { useChainId, usePublicClient, useWatchContractEvent } from 'wagmi';
 
 type Contribution = {
   txHash: `0x${string}`;
@@ -50,6 +53,17 @@ export const TableTxs: IComponent<{
   const publicClient = usePublicClient({ config: wagmiConfig });
   const [records, setRecords] = useState<Record[]>([]);
   const networkConfig = getNetworkConfig(publicClient.chain.id);
+  const chainId = useChainId();
+  const contributeEnd = useVaultStore((state) => state.vaults[chainId]?.[vaultId]?.contributeEnd);
+  const queryClient = useQueryClient();
+
+  const now = Date.now() / 1000;
+
+  const { vaultBalanceQueryKey, vaultRaisedQueryKey } = useVaultContract(
+    vaultId,
+    contributeEnd,
+    now
+  );
 
   const convertBlockNumberToTime = (blockNumber: bigint) => {
     const blockRef = 11800000;
@@ -71,6 +85,14 @@ export const TableTxs: IComponent<{
       } else {
         fetchClaimList();
       }
+
+      queryClient.invalidateQueries({
+        queryKey: vaultRaisedQueryKey,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: vaultBalanceQueryKey,
+      });
     },
   });
 

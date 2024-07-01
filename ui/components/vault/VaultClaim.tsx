@@ -16,7 +16,7 @@ export const VaultClaim: IComponent<TClaimData> = ({ claimType, fixedAmount, per
           <>
             <span className="text-gray-300 text-lg">Percentage</span>
             <span className="text-blue-500 font-bold text-medium">
-              {Number(percentage) / 1e18}% <span className="text-gray-300">of raised amount</span>
+              {Number(percentage) / 1e16}% <span className="text-gray-300">of raised amount</span>
             </span>
           </>
         )}
