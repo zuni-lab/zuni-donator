@@ -14,6 +14,7 @@ Transparency and efficiency: Track all contributions and rewards securely on the
 
 - [Project Structure](#project-structure)
 - [Features](#features)
+- [Deployment](#deployment)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -21,7 +22,6 @@ Transparency and efficiency: Track all contributions and rewards securely on the
   - [Project commands](#project-commands)
 - [Contract](#contract)
   - [Development](#development)
-  - [Deployment](#deployment)
   - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
@@ -69,7 +69,9 @@ zuni-smart-vault/
 ```
 
 # Features
+
 ## UI Features
+
 - User Dashboard: View all of vaults.
 - Create Vault: Easily create new vaults with customizable parameters.
 - Contribute to Vaults: Make contributions to existing vaults.
@@ -80,6 +82,19 @@ zuni-smart-vault/
 - Vault Management: Create and manage vaults on the Ethereum blockchain.
 - Contribution Tracking: Track contributions and balances for each vault.
 
+## Deployment
+
+### Website
+
+- [zuni.tech](https://www.zuni.tech)
+
+### Smart contract addresses
+
+- Network: `Base`, `Base Sepolia`
+  |Contract|Address|
+  |---|---|
+  |SmartVault|`0x365be3e45B591423E5b867A7dE04ccEA67ca67e7`|
+  |VaultResolver|`0x0B4034DdCBfF142c7479591a571A11379114ad9e`|
 
 # Getting Started
 
@@ -95,6 +110,7 @@ zuni-smart-vault/
    ```sh
    git clone git@github.com:zuni-lab/zuni-smart-vault.git
    ```
+
 # UI
 
 ## Project commands
@@ -107,18 +123,63 @@ zuni-smart-vault/
 
 # Contract
 
+## Installation
+
+```sh
+cd contract
+bun install
+```
+
 ## Development
 
-## Deployment
+- Copy `.env.example` to `.env`:
+
+  ```sh
+  cp .env.example .env
+  ```
+
+- Add `.env` file with the following content:
+
+  - `BASE_MAINNET_RPC`: Base Mainnet RPC URL
+  - `BASE_SEPOLIA_RPC`: Base Sepolia RPC URL
+  - `API_KEY_BASESCAN`: Basescan API key for verifying contracts
+  - `ETH_FROM`: Deployer address
+
+- Run commands:
+
+  ```sh
+  source .env
+
+  forge script script/Deploy.s.sol --rpc-url $BASE_MAINNET_RPC --account <deployer_account> --broadcast --verify
+  ```
 
 ## Testing
+
+- Lint contracts:
+
+  ```sh
+  bun run lint
+  ```
+
+- Run tests:
+
+  ```sh
+  bun run test
+  ```
 
 # Contributing
 
 We welcome contributions! Please follow these steps to contribute:
+
 - Fork the repository
 - Create a new branch (`git checkout -b feature-branch`)
 - Make your changes
 - Commit your changes (`git commit -m 'Add some feature'`)
 - Push to the branch (git push origin feature-branch)
 - Create a new Pull Request
+
+# License
+
+The primary license for ZUNI - Smart Vault contracts is the MIT License, see [`LICENSE`](./LICENSE). However, there are exceptions:
+
+- Many files in `contracts/test/` and `contracts/scripts/` remain unlicensed (as indicated in their SPDX headers).
