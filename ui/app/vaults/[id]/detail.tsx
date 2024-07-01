@@ -11,10 +11,11 @@ import { useVaultStore } from '@/states/vault';
 import { cx } from 'class-variance-authority';
 import { useParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
+import { formatEther } from 'viem';
 import { useChainId } from 'wagmi';
 import { TableTxs } from './records';
 
-const toEthers = (value?: bigint) => (value ? Number(value) / 1e18 : 0);
+const toEthers = (value?: bigint) => (value ? formatEther(value) : 0);
 
 export const VaultDetails: IComponent = () => {
   const param = useParams<{ id: string }>();
@@ -88,12 +89,18 @@ export const Vault: IComponent<{
         )}
         {(currentPhase === 'claim' || currentPhase === 'ended') &&
           (() => {
-            const burned = (Number(vaultRaised) - Number(vaultBalance)) / 1e18;
-            const progress = Math.floor((burned / toEthers(vaultRaised)) * 100);
+            // const burned = (Number(vaultRaised) - Number(vaultBalance)) / 1e18;
+            // const progress = Math.floor((burned / toEthers(vaultRaised)) * 100);
+
+            const burned = vaultRaised && vaultBalance ? vaultRaised - vaultBalance : 0;
+            const progress = vaultRaised ? (Number(burned) / Number(vaultRaised)) * 100 : 0;
+
             return (
               <div className="mt-3">
                 <p className="text-lg font-semibold mb-2">
-                  Progress: {progress || 0}% ({burned || 0} / {toEthers(vaultRaised)} ETH)
+                  Progress: {progress || 0}% (
+                  {vaultBalance && vaultRaised ? formatEther(vaultRaised - vaultBalance) : 0} /{' '}
+                  {toEthers(vaultRaised)} ETH)
                 </p>
                 <Progress
                   value={progress}
