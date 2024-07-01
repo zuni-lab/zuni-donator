@@ -76,7 +76,7 @@ contract SmartVaultTest is Test {
             smartVault.getRules(vaultId);
 
         assertEq(types.length, 3);
-        assertTrue(types[0] == Type.BYTES32);
+        assertTrue(types[0] == Type.UINT256);
         assertTrue(types[1] == Type.STRING);
         assertTrue(types[2] == Type.BOOL);
 
@@ -101,7 +101,7 @@ contract SmartVaultTest is Test {
         ops[2] = Operator.EQ;
 
         bytes[] memory thresholds = new bytes[](3);
-        thresholds[0] = abi.encode(18);
+        thresholds[0] = abi.encode(22);
         thresholds[1] = abi.encode("MIT");
         thresholds[2] = abi.encode(true);
 
@@ -152,7 +152,7 @@ contract SmartVaultTest is Test {
         ops[2] = Operator.EQ;
 
         bytes[] memory thresholds = new bytes[](3);
-        thresholds[0] = abi.encode(18);
+        thresholds[0] = abi.encode(22);
         thresholds[1] = abi.encode("MIT");
         thresholds[2] = abi.encode(true);
 
@@ -193,7 +193,7 @@ contract SmartVaultTest is Test {
         // create attestation
         address claimer = makeAddr("claimer");
         AttestationRequestData memory data =
-            AttestationRequestData(claimer, NO_EXPIRATION_TIME, false, bytes32(0), abi.encode(20, "MIT", true), 0);
+            AttestationRequestData(claimer, NO_EXPIRATION_TIME, false, bytes32(0), abi.encode(23, "MIT", true), 0);
         AttestationRequest memory request = AttestationRequest(validationSchema, data);
         bytes32 attestationUID = eas.attest(request);
 
