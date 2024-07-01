@@ -374,7 +374,7 @@ export const CreateVaultForm: IComponent = () => {
       claimData = {
         claimType: ClaimType.PERCENTAGE,
         fixedAmount: BigInt(0),
-        percentage: BigInt(parseFloat(values._zuni_smv_claimPercentage) * 1e18),
+        percentage: BigInt(parseFloat(values._zuni_smv_claimPercentage) * 1e16), // 1% = 1e16
         customData: EMPTY_HEX_DATA,
       };
     }
