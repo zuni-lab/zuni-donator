@@ -2,7 +2,7 @@ import { getNetworkConfig } from '@/utils/network';
 import { cx } from '@/utils/tools';
 import { RuleOperators, getOperator, getOperatorLabel } from '@/utils/vaults/operators';
 import { splitValidationSchema } from '@/utils/vaults/schema';
-import { isSupportedType } from '@/utils/vaults/types';
+import { isNumericType, isSupportedType } from '@/utils/vaults/types';
 import { wagmiConfig } from '@/utils/wagmi';
 import Link from 'next/link';
 import { decodeAbiParameters } from 'viem';
@@ -30,14 +30,13 @@ export const RuleItem: IComponent<{
       },
     ];
     const value = decodeAbiParameters(abi, threshold)[0];
-    thresholValue =
-      type === 'uint256'
-        ? Number(value as bigint).toLocaleString()
-        : type === 'bool'
-          ? value
-            ? 'True'
-            : 'False'
-          : (value as string);
+    thresholValue = isNumericType(type as TRuleType)
+      ? Number(value as bigint).toLocaleString()
+      : type === 'bool'
+        ? value
+          ? 'True'
+          : 'False'
+        : (value as string);
   }
 
   return (

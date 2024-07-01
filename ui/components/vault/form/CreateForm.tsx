@@ -331,8 +331,16 @@ export const CreateVaultForm: IComponent = () => {
       }
       ops.push(op);
 
-      const encodedValue = encodeAbiParameters([{ type: rule.type, value }], [value]);
-      thresholds.push(encodedValue);
+      if (isNumericType(rule.type)) {
+        const num = BigInt(value);
+        thresholds.push(encodeAbiParameters([{ type: rule.type, num }], [num]));
+      } else if (rule.type === 'bool') {
+        const bool = value === 'true';
+        thresholds.push(encodeAbiParameters([{ type: rule.type, bool }], [bool]));
+      } else {
+        const encodedValue = encodeAbiParameters([{ type: rule.type, value }], [value]);
+        thresholds.push(encodedValue);
+      }
     });
 
     if (isError) {
