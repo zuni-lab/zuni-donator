@@ -12,6 +12,13 @@ enum Operator {
 }
 
 enum Type {
+    UINT8,
+    UINT16,
+    UINT24,
+    UINT32,
+    UINT64,
+    UINT128,
+    UINT256,
     INT8,
     INT16,
     INT24,

@@ -14,7 +14,7 @@ contract ParserTest is Test {
         string memory input = "uint256 age,address recipient,bool passed";
         Type[] memory output = input.extractTypes();
         assertEq(output.length, 3);
-        assertEq(uint256(output[0]), uint256(Type.BYTES32));
+        assertEq(uint256(output[0]), uint256(Type.UINT256));
         assertEq(uint256(output[1]), uint256(Type.ADDRESS));
         assertEq(uint256(output[2]), uint256(Type.BOOL));
     }
@@ -24,7 +24,7 @@ contract ParserTest is Test {
         bytes memory inputBytes = bytes(input);
         Type[] memory output = inputBytes.extractTypes();
         assertEq(output.length, 3);
-        assertEq(uint256(output[0]), uint256(Type.BYTES32));
+        assertEq(uint256(output[0]), uint256(Type.UINT256));
         assertEq(uint256(output[1]), uint256(Type.ADDRESS));
         assertEq(uint256(output[2]), uint256(Type.BOOL));
     }
